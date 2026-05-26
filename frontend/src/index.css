@@ -1,0 +1,236 @@
+/* src/index.css (or wherever this file is located) */
+
+/**
+ * Global Application Styles
+ * 
+ * This file contains global CSS styles, custom utility classes, and Tailwind CSS extensions
+ * used throughout the EchoWave music application. It provides consistent styling,
+ * animations, and UI enhancements across all components.
+ * 
+ * Features:
+ * - Active navigation link styling
+ * - Loading animation bar effects
+ * - Smooth transition utilities
+ * - Custom scrollbar hiding
+ * - Tailwind CSS base imports and extensions
+ * 
+ * @file Global styles and custom CSS utilities
+ */
+
+/**
+ * Tailwind CSS Imports
+ * 
+ * Import Tailwind CSS layers for base styles, components, and utilities.
+ * The @reference directive ensures proper CSS processing and optimization.
+ */
+@import "tailwindcss";
+@reference "tailwindcss";
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/**
+ * Active Navigation Link Styling
+ * 
+ * Styles applied to active navigation links to provide visual feedback
+ * and indicate the current page/section to users.
+ * 
+ * Usage: Applied automatically by React Router's NavLink component
+ * when the link matches the current route.
+ * 
+ * @class .active
+ * 
+ * Styling includes:
+ * - Cyan text color for the link text
+ * - Matching cyan color for any SVG icons within active links
+ * - Consistent active state across all navigation elements
+ */
+.active {
+  @apply text-cyan-500; /* Tailwind's cyan-500 color for active state */
+}
+
+.active svg {
+  @apply text-cyan-500; /* Ensure SVG icons match active text color */
+}
+
+/**
+ * Loading Animation Bar Staggering
+ * 
+ * Creates a cascading animation effect for loading bars by applying
+ * sequential animation delays to consecutive bar elements.
+ * 
+ * Usage: Typically used in loading components or audio visualizers
+ * where multiple bars animate in sequence for visual appeal.
+ * 
+ * Animation Structure:
+ * - 6 bars total with increasing delay (0.2s increments)
+ * - Creates wave-like loading animation
+ * - Smooth sequential appearance
+ */
+.bar:nth-child(2) {
+  animation-delay: 0.2s; /* Second bar starts after 0.2s */
+}
+.bar:nth-child(3) {
+  animation-delay: 0.4s; /* Third bar starts after 0.4s */
+}
+.bar:nth-child(4) {
+  animation-delay: 0.6s; /* Fourth bar starts after 0.6s */
+}
+.bar:nth-child(5) {
+  animation-delay: 0.8s; /* Fifth bar starts after 0.8s */
+}
+.bar:nth-child(6) {
+  animation-delay: 1s;   /* Sixth bar starts after 1s */
+}
+
+/**
+ * Smooth Transition Utility
+ * 
+ * Reusable transition class for smooth state changes and animations.
+ * Applied to elements that need graceful transitions between states.
+ * 
+ * @class .smooth-transition
+ * 
+ * Transition Properties:
+ * - All CSS properties transition
+ * - 0.3s duration for noticeable but not slow transitions
+ * - ease-in-out timing function for smooth acceleration and deceleration
+ * 
+ * Usage Examples:
+ * - Hover effects on buttons and cards
+ * - Theme switching animations
+ * - Modal open/close transitions
+ * - Navigation menu animations
+ */
+.smooth-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+/**
+ * Scrollbar Hiding Utilities
+ * 
+ * Cross-browser CSS to completely hide scrollbars while maintaining
+ * scroll functionality. Essential for clean, minimalist UI designs.
+ * 
+ * @class .hide-scrollbar
+ * 
+ * Browser Support:
+ * - Chrome, Safari, Opera: WebKit pseudo-element hiding
+ * - IE, Edge: -ms-overflow-style property
+ * - Firefox: scrollbar-width property
+ */
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Completely remove scrollbar from view */
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge scrollbar hiding */
+  scrollbar-width: none;     /* Firefox scrollbar hiding */
+}
+
+/**
+ * Usage Examples in Components:
+ * 
+ * @example
+ * // Active navigation links (automatic with React Router)
+ * <NavLink to="/discover" className="nav-link">
+ *   Discover
+ * </NavLink>
+ * 
+ * @example
+ * // Loading animation with staggered bars
+ * <div className="loading-bars">
+ *   <div className="bar"></div>
+ *   <div className="bar"></div>
+ *   <div className="bar"></div>
+ *   <div className="bar"></div>
+ *   <div className="bar"></div>
+ *   <div className="bar"></div>
+ * </div>
+ * 
+ * @example
+ * // Smooth transitions on interactive elements
+ * <button className="smooth-transition hover:scale-105">
+ *   Click Me
+ * </button>
+ * 
+ * @example
+ * // Scrollable containers without visible scrollbars
+ * <div className="hide-scrollbar overflow-y-scroll">
+ *   {/* Long content that remains scrollable but clean * /}
+ * </div>
+ */
+
+/**
+ * Design System Integration:
+ * 
+ * These global styles work with Tailwind CSS to create a cohesive design system:
+ * 
+ * 1. **Color Consistency**: Active states use Tailwind's cyan-500 color
+ * 2. **Timing Alignment**: Transitions match Tailwind's default timing scale
+ * 3. **Utility First**: Custom classes complement Tailwind's utility approach
+ * 4. **Responsive Ready**: Works seamlessly with Tailwind's responsive utilities
+ * 
+ * @example
+ * // Combined usage with Tailwind classes
+ * <div className="smooth-transition hide-scrollbar overflow-y-auto p-4">
+ *   {/* Content * /}
+ * </div>
+ */
+
+/**
+ * Performance Considerations:
+ * 
+ * 1. **Efficient Animations**: CSS transitions are GPU-accelerated when possible
+ * 2. **Minimal Overhead**: Custom classes are simple and lightweight
+ * 3. **Browser Optimized**: Scrollbar hiding uses native browser methods
+ * 4. **Tree Shaking**: Unused styles can be purged in production builds
+ */
+
+/**
+ * Browser Compatibility:
+ * 
+ * - Active States: Universal browser support
+ * - CSS Animations: IE10+ (with prefixes for older browsers)
+ * - Scrollbar Hiding: Modern browsers (fallbacks for older versions)
+ * - CSS Variables: IE11+ (with fallbacks if needed)
+ * 
+ * The styles are designed to degrade gracefully in older browsers.
+ */
+
+/**
+ * Future Enhancements:
+ * 
+ * Additional global styles that could be added:
+ * 
+ * @example
+ * /* Dark mode support * /
+ * @media (prefers-color-scheme: dark) {
+ *   .dark-mode-element {
+ *     @apply bg-gray-900 text-white;
+ *   }
+ * }
+ * 
+ * @example
+ * /* Custom focus styles for accessibility * /
+ * .focus-ring:focus {
+ *   @apply outline-none ring-2 ring-cyan-500 ring-offset-2;
+ * }
+ * 
+ * @example
+ * /* Reduced motion support for accessibility * /
+ * @media (prefers-reduced-motion: reduce) {
+ *   .smooth-transition {
+ *     transition: none;
+ *   }
+ * }
+ */
