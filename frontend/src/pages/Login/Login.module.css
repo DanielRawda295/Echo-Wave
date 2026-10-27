@@ -179,6 +179,39 @@
 /* ============================= */
 /* Forgot Password link */
 /* ============================= */
+.guestButton {
+  padding: 0.8rem;
+  border: 2px solid #4f46e5;
+  border-radius: 8px;
+  background: transparent;
+  color: #4338ca;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.guestButton:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+.guestButton:focus-visible {
+  outline: 3px solid #818cf8;
+  outline-offset: 3px;
+}
+
+.guestButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.guestHint {
+  margin: 0;
+  color: #555;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .forgotPassword {
   color: #4f46e5;
   cursor: pointer;

@@ -399,6 +399,7 @@ export default function Login() {
   const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { token, login } = useAuth();
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -476,6 +477,25 @@ export default function Login() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    if (isLoading) return;
+    setFormError('');
+    setIsLoading(true);
+    setIsGuestLoading(true);
+
+    try {
+      const res = await api.post('/auth/guest');
+      if (!res.data.access_token) throw new Error('Missing guest token');
+      login(res.data.access_token, { persist: false });
+      navigate(nextParam, { replace: true });
+    } catch {
+      setFormError('Guest login is unavailable right now. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setIsGuestLoading(false);
     }
   };
 
@@ -670,7 +690,7 @@ export default function Login() {
             )}
           </div>
 
-          {formError && <div className={styles.error}>{formError}</div>}
+          {formError && <div className={styles.error} role="alert">{formError}</div>}
 
           <button
             type="submit"
@@ -679,8 +699,22 @@ export default function Login() {
               isLoading ? { opacity: 0.7, cursor: 'not-allowed' } : {}
             }
           >
-            {isLoading ? 'Logging in...' : 'Log In'}
+            {isLoading && !isGuestLoading ? 'Logging in...' : 'Log In'}
           </button>
+
+          <button
+            type="button"
+            className={styles.guestButton}
+            onClick={handleGuestLogin}
+            disabled={isLoading}
+            aria-busy={isGuestLoading}
+            aria-describedby="guest-login-hint"
+          >
+            {isGuestLoading ? 'Starting guest session...' : 'Continue as Guest'}
+          </button>
+          <p id="guest-login-hint" className={styles.guestHint}>
+            Try Echo Wave without signing up. Your guest session stays in this browser tab.
+          </p>
 
           {/* Divider */}
           <div

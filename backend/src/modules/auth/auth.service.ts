@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'node:crypto';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -150,6 +151,29 @@ export class AuthService {
         role: user.role,
       },
       access_token: token,
+    };
+  }
+
+  // Each visitor gets an isolated listener account with no password to expose.
+  async guestLogin() {
+    const user = await this.usersService.create({
+      email: `guest-${randomUUID()}@guest.echowave.invalid`,
+      username: 'Guest Listener',
+      role: 'listener',
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
+      access_token: this.jwtService.sign({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      }, { expiresIn: '1d' }),
     };
   }
 

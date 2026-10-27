@@ -20,6 +20,11 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  @Post('guest')
+  guestLogin() {
+    return this.authService.guestLogin();
+  }
+
   @Post('google-login')
   googleLogin(@Body() dto: GoogleLoginDto) {
     return this.authService.googleLogin(dto);
