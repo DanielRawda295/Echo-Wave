@@ -1,0 +1,23 @@
+# Private environment settings at any directory depth
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Dependencies, generated builds, and test output
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Runtime uploads (existing committed samples are not removed by this rule)
+/backend/uploads/
+
+# Temporary audit and working files
+.tmp/
+.temp/
+.DS_Store
+Thumbs.db
