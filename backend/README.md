@@ -26,6 +26,8 @@ npm run start:dev
 
 The dependency manifest includes the GraphQL/Apollo, Google authentication, and Nodemailer packages used by the source. Review the root README's remaining deployment items before publishing the API.
 
+Dependency review on 12 November 2026: the updated lockfile has no high or critical npm audit findings. The production-only audit reports three moderate findings through TypeORM's `glob`/`minimatch` dependencies; this app supplies fixed entity/migration paths rather than user-provided glob patterns. The full audit also includes low/moderate build and test tooling findings. These remain open for compatible upstream fixes. The scoped GraphQL utility and brace-expansion overrides select patched versions without upgrading the NestJS framework major version.
+
 | Address | Purpose |
 | --- | --- |
 | `http://localhost:3000/api` | REST API base prefix, not a root health route |
