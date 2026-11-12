@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FiPlus, FiX } from 'react-icons/fi';
 import api from '../utils/api';
 import { useToasts } from '../hooks/useToasts';
@@ -39,6 +40,17 @@ export default function AddToPlaylist({
   const [newName, setNewName] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    // A modal dialog uses the browser's top layer, above every card and player.
+    dialog.showModal();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [open]);
 
   const externalId = useMemo(() => getExternalId(song, index), [song, index]);
 
@@ -142,20 +154,22 @@ export default function AddToPlaylist({
         <FiPlus />
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
-          onMouseDown={() => setOpen(false)}
-          role="dialog"
-          aria-label="Add to playlist dialog"
+      {open && createPortal(
+        <dialog
+          ref={dialogRef}
+          className="fixed inset-0 m-0 flex h-dvh max-h-none w-screen max-w-none items-end justify-center border-0 bg-transparent p-4 text-white backdrop:bg-black/60 sm:items-center"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}
+          onCancel={() => setOpen(false)}
+          onClose={() => setOpen(false)}
+          aria-labelledby={`${dialogId}-title`}
         >
           <div
-            className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b0b18]/95 p-5 text-white shadow-2xl backdrop-blur-md"
+            className="max-h-[calc(100dvh-32px)] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#0b0b18] p-5 text-white shadow-2xl"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="truncate text-base font-semibold">Add to playlist</div>
+                <h2 id={`${dialogId}-title`} className="truncate text-base font-semibold">Add to playlist</h2>
                 <div className="truncate text-xs text-white/70">
                   {song?.title ?? song?.trackName ?? 'Selected song'}
                 </div>
@@ -175,8 +189,9 @@ export default function AddToPlaylist({
                 <div className="text-sm text-white/80">Loading…</div>
               ) : (
                 <>
-                  <label className="text-sm text-white/80">Choose a playlist</label>
+                  <label htmlFor={`${dialogId}-select`} className="text-sm text-white/80">Choose a playlist</label>
                   <select
+                    id={`${dialogId}-select`}
                     className="mt-2 h-11 w-full rounded-xl bg-white/5 px-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-2 focus:ring-indigo-500"
                     value={selectedId}
                     onChange={(e) => setSelectedId(e.target.value ? Number(e.target.value) : '')}
@@ -207,6 +222,7 @@ export default function AddToPlaylist({
                 <div className="text-sm font-semibold">Or create a new playlist</div>
                 <div className="mt-3 flex gap-2 sm:flex-row flex-col">
                   <input
+                    aria-label="Playlist name"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="Playlist name"
@@ -227,7 +243,8 @@ export default function AddToPlaylist({
               {error && <div className="mt-3 text-sm text-red-300">{error}</div>}
             </div>
           </div>
-        </div>
+        </dialog>,
+        document.body,
       )}
     </>
   );
