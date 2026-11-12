@@ -50,26 +50,26 @@ type TrackProps = {
  * Used in the music player UI to give the user visual feedback about the current track.
  */
 const Track: React.FC<TrackProps> = ({ isPlaying, isActive, activeSong }) => (
-  <div className="flex-1 flex items-center justify-start">
+  <div className="flex min-w-0 flex-1 items-center justify-start gap-3">
     {/* Cover Art Image — spins if the song is active and playing */}
     <div
       className={`${
         isPlaying && isActive ? 'animate-[spin_3s_linear_infinite]' : ''
-      } hidden sm:block h-16 w-16 mr-4`}
+      } h-11 w-11 shrink-0 sm:h-14 sm:w-14`}
     >
       <img
         src={activeSong?.images?.coverart}
         alt="cover art"
-        className="rounded-full"
+        className="h-full w-full rounded-lg object-cover"
       />
     </div>
 
     {/* Song Title and Subtitle (or fallback text if unavailable) */}
     <div className="min-w-0 flex-1">
-      <p className="truncate text-white font-bold text-lg">
+      <p className="truncate text-sm font-semibold text-white sm:text-base">
         {activeSong?.title ?? 'No active Song'}
       </p>
-      <p className="truncate text-gray-300">
+      <p className="truncate text-xs text-gray-400 sm:text-sm">
         {activeSong?.subtitle ?? 'No active Song'}
       </p>
     </div>

@@ -35,7 +35,7 @@ Dependency review on 12 November 2026: the updated lockfile has no high or criti
 | `http://localhost:3000/api/graphql` | GraphQL endpoint and development playground |
 | `http://localhost:3000/uploads/` | Uploaded-file URL prefix |
 
-Protected operations use `Authorization: Bearer <token>`. Google login requires both Google environment values in the current service. Production password-reset delivery uses `BREVO_API_KEY` and a verified `EMAIL_FROM` sender through the Brevo HTTPS API. `EMAIL_FROM_NAME` defaults to EchoWave. SMTP settings are used only as a local-development fallback. Reset codes expire after ten minutes, are consumed once, and allow three requests per email per hour; codes are never printed in server logs.
+Protected operations use `Authorization: Bearer <token>`. Google login requires `GOOGLE_CLIENT_ID` to match the frontend public client ID. A client secret is not needed to verify ID tokens. Register the public frontend origin and `/auth/google/callback` URL in that Google Cloud OAuth client. Production password-reset delivery uses `BREVO_API_KEY` and a verified `EMAIL_FROM` sender through the Brevo HTTPS API. `EMAIL_FROM_NAME` defaults to EchoWave. SMTP settings are used only as a local-development fallback. Reset codes expire after ten minutes, are consumed once, and allow three requests per email per hour; codes are never printed in server logs.
 
 ## Commands
 

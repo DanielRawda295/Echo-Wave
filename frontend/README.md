@@ -38,4 +38,8 @@ Catalog results and preview audio come from iTunes. Community data, accounts, an
 
 All `VITE_` variables are public browser configuration. Keep private credentials on the backend. The current country lookup needs no geolocation API key. Real `.env` files are ignored by the repository's root rules; only sanitized examples should be committed.
 
+The mobile layout uses a modal navigation drawer, two-column music cards, a compact fixed player, and a separate scroll area for page content. The charts sidebar appears only on wide screens. Login/signup controls are fluid, and signup styles are scoped to that form so they cannot override music controls.
+
+For deployed Google login, set `VITE_GOOGLE_CLIENT_ID` on the frontend and the same `GOOGLE_CLIENT_ID` on the backend. Set `VITE_GOOGLE_REDIRECT_URI` to `https://echowave-web.onrender.com/auth/google/callback`. Register `https://echowave-web.onrender.com` as an authorized JavaScript origin and the complete callback URL as an authorized redirect URI for that Google Cloud OAuth client, preserving localhost entries if still needed. The frontend must rebuild after environment changes.
+
 Dependency review on 12 November 2026: compatible lockfile updates remove all high/critical npm audit findings. The production-only audit reports zero findings. Seven moderate findings remain in the TypeScript ESLint/minimatch development-tool chain; these are not part of the browser bundle and remain open for compatible upstream fixes.

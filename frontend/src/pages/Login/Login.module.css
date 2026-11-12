@@ -500,3 +500,32 @@
   border-color: #4f46e5;
   box-shadow: 0 0 5px rgba(79,70,229,0.4);
 }
+
+/* Fluid auth forms and quieter motion on small screens. */
+.container { min-height: 100dvh; padding: 32px 16px; box-sizing: border-box; }
+.content { width: 100%; max-width: 420px; gap: 24px; }
+.header { margin-bottom: 0; }
+.title { font-size: clamp(1.8rem, 6vw, 2.5rem); text-shadow: none; }
+.tagline { animation: none; text-shadow: none; }
+.description { font-weight: 400; text-shadow: none; color: #b8b8cc; }
+.form { width: 100%; min-width: 0; box-sizing: border-box; padding: 28px; animation: none; }
+.form input { min-width: 0; box-shadow: none; }
+.form input[type="checkbox"] { width: 18px; height: 18px; padding: 0; flex: 0 0 18px; accent-color: #4f46e5; }
+.form button { min-height: 44px; box-shadow: none; text-shadow: none; }
+.fieldRow { min-width: 0; }
+.fieldRow input { width: 0; min-width: 0; }
+.checkbox { white-space: nowrap; font-weight: 400; }
+.footer { margin-top: 24px; font-weight: 400; text-shadow: none; }
+.modalOverlay { padding: 16px; overflow-y: auto; }
+.modalContent { max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; }
+@media (max-width: 480px) {
+ .container { justify-content: flex-start; padding: 24px 16px; }
+ .form { padding: 24px 20px; border-radius: 16px; }
+ .description { font-size: 0.9rem; margin-top: 10px; }
+ .tagline { font-size: 1rem; }
+ .inlineRow { flex-wrap: wrap; }
+ .helpButton { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .container, .header, .title, .description, .form, .footer, .modalContent, .modalOverlay { animation: none; }
+}

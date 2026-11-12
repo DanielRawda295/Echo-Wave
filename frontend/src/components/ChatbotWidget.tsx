@@ -144,7 +144,7 @@ export default function ChatbotWidget({
     <>
       {isOpen && !isMinimized && (
         <div
-          className="fixed z-50 w-[360px] max-w-[calc(100vw-32px)] rounded-2xl border border-white/10 bg-[#0b0b18]/95 shadow-2xl backdrop-blur-md"
+          className="fixed z-50 flex max-h-[calc(100dvh-200px)] w-[360px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b18]/95 shadow-2xl backdrop-blur-md"
           style={{ right: rightOffsetPx, bottom: panelBottomPx }}
           role="dialog"
           aria-label="Chat assistant"
@@ -182,7 +182,7 @@ export default function ChatbotWidget({
             </div>
           </div>
 
-          <div ref={listRef} className="max-h-[360px] overflow-y-auto px-3 py-3">
+          <div ref={listRef} className="min-h-16 flex-1 overflow-y-auto px-3 py-3">
             <div className="flex flex-col gap-2">
               {messages.map((m) => (
                 <div

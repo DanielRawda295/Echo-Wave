@@ -32,7 +32,7 @@ const Searchbar: React.FC = () => {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search/${searchTerm}`);
+      navigate(`/search/${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 
@@ -48,22 +48,23 @@ const Searchbar: React.FC = () => {
     <form
       onSubmit={handleSubmit}
       autoComplete="off"
-      className="p-2 text-gray-400 focus-within:text-gray-600"
+      role="search"
+      className="shrink-0 px-4 py-3 text-gray-400 sm:px-6"
     >
       {/** Screen reader only label */}
       <label htmlFor="search-field" className="sr-only">
-        Search all files
+        Search songs and artists
       </label>
 
       {/** Input container with search icon */}
-      <div className="flex flex-row justify-start items-center">
-        <FiSearch aria-hidden="true" className="w-5 h-5 ml-4" />
+      <div className="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 focus-within:border-indigo-400">
+        <FiSearch aria-hidden="true" className="h-5 w-5 shrink-0" />
         <input
           name="search-field"
           autoComplete="off"
           id="search-field"
-          className="flex-1 bg-transparent border-none placeholder-gray-500 outline-none text-base text-white p-4"
-          placeholder="Search"
+          className="min-w-0 flex-1 bg-transparent py-3 text-base text-white placeholder-gray-400 outline-none"
+          placeholder="Search songs or artists"
           type="search"
           value={searchTerm}
           onChange={handleChange}

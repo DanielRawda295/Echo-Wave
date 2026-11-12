@@ -50,19 +50,13 @@ const PlayPause: React.FC<PlayPauseProps> = ({
   handlePause,
   handlePlay,
 }) => (
-  isPlaying && activeSong?.title === song.title ? (
-    <FaPauseCircle
-      size={35}
-      className="text-gray-300"
-      onClick={handlePause}
-    />
-  ) : (
-    <FaPlayCircle
-      size={35}
-      className="text-gray-300"
-      onClick={handlePlay}
-    />
-  )
+  <button type="button" aria-label={`${isPlaying && activeSong?.title === song.title ? 'Pause' : 'Play'} ${song.title || 'track'}`}
+    onClick={isPlaying && activeSong?.title === song.title ? handlePause : handlePlay}
+    className="flex h-11 w-11 items-center justify-center rounded-full text-white focus-visible:outline-2 focus-visible:outline-indigo-400">
+    {isPlaying && activeSong?.title === song.title
+      ? <FaPauseCircle size={35} aria-hidden="true" />
+      : <FaPlayCircle size={35} aria-hidden="true" />}
+  </button>
 );
 
 export default PlayPause;

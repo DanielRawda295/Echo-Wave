@@ -161,7 +161,7 @@ const Discover: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
             {recommended.slice(0, 8).map((song: any, i: number) => (
               <SongCard
                 key={song.key || song.trackId || `rec_${i}`}
@@ -181,14 +181,14 @@ const Discover: React.FC = () => {
        * Contains the genre title and selection dropdown.
        * Responsive layout adapts to different screen sizes.
        */}
-      <div className="w-full flex justify-between items-center sm:flex-row flex-col mt-4 mb-10">
+      <div className="w-full flex flex-col items-start justify-between gap-4 mb-6 mt-3 sm:flex-row sm:items-center sm:mb-10">
         {/**
          * Dynamic Genre Title
          * 
          * Displays the current genre name in the page header.
          * Updates automatically when genre selection changes.
          */}
-        <h2 className="font-bold text-3xl text-white text-left">
+        <h2 className="font-bold text-2xl sm:text-3xl text-white text-left">
           Discover {genreTitle}
         </h2>
 
@@ -201,7 +201,7 @@ const Discover: React.FC = () => {
         <select
           onChange={(e) => dispatch(selectGenreListId(e.target.value))}
           value={genreListId || 'POP'}
-          className="bg-black text-gray-300 p-3 text-sm rounded-lg outline-none sm:mt-0 mt-5"
+          className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-gray-200 outline-none sm:w-auto"
         >
           {/**
            * Genre Options Rendering
@@ -223,7 +223,7 @@ const Discover: React.FC = () => {
        * Responsive grid displaying song cards for the selected genre.
        * Adapts layout for different screen sizes with consistent spacing.
        */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
         {/**
          * Dynamic Song Cards Rendering
          * 

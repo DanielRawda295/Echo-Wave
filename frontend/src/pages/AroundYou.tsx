@@ -140,12 +140,12 @@ const AroundYou: React.FC = () => {
   return (
     <div className="flex flex-col">
       {/* Page Header with Location Information */}
-      <h2 className="font-bold text-3xl text-white text-left mt-4 mb-10">
+      <h2 className="font-bold text-2xl sm:text-3xl text-white text-left mt-4 mb-10">
         Around you <span className="font-black">{country}</span>
       </h2>
 
       {/* Songs Grid Layout */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
         {/**
          * Dynamic Song Cards Rendering
          * 

@@ -146,10 +146,10 @@ const MusicPlayer: React.FC = () => {
         </div>
       )}
 
-      <div className="fixed bottom-0 w-full bg-black z-50 flex items-center justify-between sm:px-12 px-8 py-2">
+      <div className="music-player fixed inset-x-0 bottom-0 z-40 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-white/10 bg-[#11111d]/95 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur-lg sm:flex sm:justify-between sm:px-6">
         <Track isPlaying={isPlaying} isActive={isActive} activeSong={activeSong} />
 
-        <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="player-controls flex min-w-0 flex-col items-center justify-center sm:flex-1">
           <Controls
             isPlaying={isPlaying}
             repeat={repeat}

@@ -512,14 +512,8 @@ export default function Login() {
       // ignore
     }
 
-    console.log('Google OAuth Config:', {
-      clientId: clientId ? '✓ Set' : '✗ Missing',
-      redirectUri,
-      currentOrigin: window.location.origin,
-    });
-
     if (!clientId) {
-      alert('Google OAuth Client ID is not configured. Please check your .env file.');
+      setFormError('Google sign-in is being configured. You can continue as a guest or use email and password.');
       return;
     }
 
@@ -532,7 +526,6 @@ export default function Login() {
       `nonce=${encodeURIComponent(nonce)}&` +
       `state=google_${Date.now()}`;
 
-    console.log('Redirecting to:', authUrl);
     try {
       sessionStorage.setItem('echowave.oauth.persist', rememberMe ? '1' : '0');
       sessionStorage.setItem('echowave.oauth.next', nextParam || '/');

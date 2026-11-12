@@ -50,9 +50,9 @@ export default function UploadSong() {
 
   return (
     <div className="flex flex-col">
-      <div className="w-full flex justify-between items-center sm:flex-row flex-col mt-4 mb-10">
+      <div className="w-full flex flex-col items-start justify-between gap-4 mb-6 mt-3 sm:flex-row sm:items-center sm:mb-10">
         <div>
-          <h2 className="font-bold text-3xl text-white text-left">Upload a song</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-white text-left">Upload a song</h2>
           <p className="text-sm text-white/70 mt-1">Publish your own track to EchoWave.</p>
         </div>
       </div>

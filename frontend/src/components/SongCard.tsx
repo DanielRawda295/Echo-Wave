@@ -83,7 +83,7 @@ const SongCard: React.FC<SongCardProps> = ({ song, isPlaying, activeSong, data, 
   };
 
   return (
-    <div className="flex w-full max-w-[280px] flex-col p-4 bg-white/5 bg-opacity-80 backdrop-blur-sm animate-slideup rounded-lg cursor-pointer">
+    <div className="flex w-full min-w-0 max-w-[280px] flex-col rounded-xl bg-white/5 p-2.5 sm:p-4">
       {/** Song cover art with Play/Pause overlay */}
       <div className="relative w-full aspect-square group">
         <div className="absolute right-2 top-2 z-20 flex items-center gap-2">
@@ -107,8 +107,8 @@ const SongCard: React.FC<SongCardProps> = ({ song, isPlaying, activeSong, data, 
           </button>
         </div>
         <div
-          className={`absolute inset-0 justify-center items-center bg-black bg-opacity-50 group-hover:flex ${
-            activeSong?.title === song.title ? 'flex bg-black bg-opacity-70' : 'hidden'
+          className={`absolute inset-0 items-end justify-start rounded-lg bg-linear-to-t from-black/35 to-transparent p-2 group-hover:flex sm:items-center sm:justify-center sm:bg-black/40 ${
+            activeSong?.title === song.title ? 'flex' : 'flex sm:hidden'
           }`}
         >
           <PlayPause
@@ -120,7 +120,8 @@ const SongCard: React.FC<SongCardProps> = ({ song, isPlaying, activeSong, data, 
           />
         </div>
         <img 
-          alt="song_img" 
+          alt={`${song.title || song.trackName || 'Song'} artwork`}
+          loading="lazy"
           src={song.images?.coverart || song.artworkUrl100} 
           className="h-full w-full rounded-lg object-cover" 
         />
@@ -128,7 +129,7 @@ const SongCard: React.FC<SongCardProps> = ({ song, isPlaying, activeSong, data, 
 
       {/** Song title and artist links */}
       <div className="mt-4 flex flex-col">
-        <p className="font-semibold text-lg text-white truncate">
+        <p className="truncate text-sm font-semibold text-white sm:text-lg">
           <Link to={`/songs/${song.key || song.trackId}`}>
             {song.title || song.trackName}
           </Link>

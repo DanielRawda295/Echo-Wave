@@ -91,96 +91,13 @@ const Controls: React.FC<ControlsProps> = ({
   handleNextSong,
   onToggleQueue,
 }) => (
-  <div className="flex items-center justify-around md:w-36 lg:w-52 2xl:w-80">
-    {/**
-     * Repeat Button
-     *
-     * Toggles the repeat mode of the player.
-     * The icon color changes to red when active.
-     */}
-    <BsArrowRepeat
-      size={20}
-      color={repeat ? 'red' : 'white'}
-      onClick={() => setRepeat((prev) => !prev)}
-      className="hidden sm:block cursor-pointer"
-    />
-
-    {/**
-     * Previous Song Button
-     *
-     * Allows users to navigate to the previous track.
-     * Only visible when there are songs in the playlist.
-     */}
-    {currentSongs?.length && (
-      <MdSkipPrevious
-        size={30}
-        color="#FFF"
-        className="cursor-pointer"
-        onClick={handlePrevSong}
-      />
-    )}
-
-    {/**
-     * Play/Pause Button
-     *
-     * Displays a play icon when paused and a pause icon when playing.
-     * Central main control for playback state management.
-     */}
-    {isPlaying ? (
-      <BsFillPauseFill
-        size={45}
-        color="#FFF"
-        onClick={handlePlayPause}
-        className="cursor-pointer"
-      />
-    ) : (
-      <BsFillPlayFill
-        size={45}
-        color="#FFF"
-        onClick={handlePlayPause}
-        className="cursor-pointer"
-      />
-    )}
-
-    {/**
-     * Next Song Button
-     *
-     * Allows users to skip to the next track in the playlist.
-     * Only visible when there are songs available.
-     */}
-    {currentSongs?.length && (
-      <MdSkipNext
-        size={30}
-        color="#FFF"
-        className="cursor-pointer"
-        onClick={handleNextSong}
-      />
-    )}
-
-    {/**
-     * Shuffle Button
-     *
-     * Enables or disables shuffle playback mode.
-     * The icon turns red when shuffle is active.
-     */}
-    <BsShuffle
-      size={20}
-      color={shuffle ? 'red' : 'white'}
-      onClick={() => setShuffle((prev) => !prev)}
-      className="hidden sm:block cursor-pointer"
-    />
-
-    {onToggleQueue && (
-      <button
-        type="button"
-        className="hidden sm:inline-flex items-center justify-center rounded-lg p-1 text-white/90 hover:bg-white/10"
-        onClick={onToggleQueue}
-        aria-label="Up next queue"
-        title="Up next"
-      >
-        <FiList size={20} />
-      </button>
-    )}
+  <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+    <button type="button" aria-label="Repeat" aria-pressed={repeat} onClick={() => setRepeat(prev => !prev)} className="hidden h-11 w-9 items-center justify-center rounded-lg text-white sm:inline-flex"><BsArrowRepeat size={20} color={repeat ? '#a5b4fc' : 'white'} /></button>
+    <button type="button" aria-label="Previous song" disabled={!currentSongs?.length} onClick={handlePrevSong} className="flex h-11 w-10 items-center justify-center rounded-lg text-white disabled:opacity-40"><MdSkipPrevious size={28} /></button>
+    <button type="button" aria-label={isPlaying ? 'Pause' : 'Play'} onClick={handlePlayPause} className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#151321]">{isPlaying ? <BsFillPauseFill size={30} /> : <BsFillPlayFill size={30} />}</button>
+    <button type="button" aria-label="Next song" disabled={!currentSongs?.length} onClick={handleNextSong} className="flex h-11 w-10 items-center justify-center rounded-lg text-white disabled:opacity-40"><MdSkipNext size={28} /></button>
+    <button type="button" aria-label="Shuffle" aria-pressed={shuffle} onClick={() => setShuffle(prev => !prev)} className="hidden h-11 w-9 items-center justify-center rounded-lg text-white sm:inline-flex"><BsShuffle size={18} color={shuffle ? '#a5b4fc' : 'white'} /></button>
+    {onToggleQueue && <button type="button" onClick={onToggleQueue} aria-label="Up next queue" className="hidden h-11 w-9 items-center justify-center rounded-lg text-white sm:inline-flex"><FiList size={20} /></button>}
   </div>
 );
 

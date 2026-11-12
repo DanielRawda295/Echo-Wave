@@ -11,9 +11,9 @@ export default function RecentlyPlayed() {
 
   return (
     <div className="flex flex-col">
-      <div className="w-full flex justify-between items-center sm:flex-row flex-col mt-4 mb-10">
+      <div className="w-full flex flex-col items-start justify-between gap-4 mb-6 mt-3 sm:flex-row sm:items-center sm:mb-10">
         <div>
-          <h2 className="font-bold text-3xl text-white text-left">Recently played</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-white text-left">Recently played</h2>
           <p className="text-sm text-white/70 mt-1">
             {items.length ? `${items.length} tracks` : 'Nothing played yet'}
           </p>
@@ -35,7 +35,7 @@ export default function RecentlyPlayed() {
           Start playing songs and they will appear here.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
           {songs.map((song: any, i: number) => (
             <SongCard
               key={song.key || song.trackId || `${i}`}

@@ -88,7 +88,7 @@ const TopCharts: React.FC = () => {
        * Indicates the purpose of the page clearly with a bold title.
        * Uses consistent typography to match the app’s design system.
        */}
-      <h2 className="font-bold text-3xl text-white text-left mt-4 mb-10">
+      <h2 className="font-bold text-2xl sm:text-3xl text-white text-left mt-4 mb-10">
         Discover Top Charts
       </h2>
 
@@ -98,7 +98,7 @@ const TopCharts: React.FC = () => {
        * Flexible grid that adapts to various screen sizes.
        * Uses Tailwind’s utility classes for consistent spacing.
        */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
         {/**
          * Dynamic Song Cards Rendering
          *

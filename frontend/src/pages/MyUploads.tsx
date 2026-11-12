@@ -140,9 +140,9 @@ export default function MyUploads() {
 
   return (
     <div className="flex flex-col">
-      <div className="w-full flex justify-between items-center sm:flex-row flex-col mt-4 mb-10">
+      <div className="w-full flex flex-col items-start justify-between gap-4 mb-6 mt-3 sm:flex-row sm:items-center sm:mb-10">
         <div>
-          <h2 className="font-bold text-3xl text-white text-left">My uploads</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-white text-left">My uploads</h2>
           <p className="text-sm text-white/70 mt-1">{tracks.length} tracks</p>
         </div>
       </div>
@@ -152,7 +152,7 @@ export default function MyUploads() {
           You haven’t uploaded any songs yet. Use the Upload page to publish your first track.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
           {songs.map((song: any, i: number) => {
             const t = tracks[i];
             return (

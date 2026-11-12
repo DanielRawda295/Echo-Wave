@@ -105,9 +105,9 @@ export default function Playlists() {
 
   return (
     <div className="flex flex-col">
-      <div className="w-full flex justify-between items-center sm:flex-row flex-col mt-4 mb-10">
+      <div className="w-full flex flex-col items-start justify-between gap-4 mb-6 mt-3 sm:flex-row sm:items-center sm:mb-10">
         <div>
-          <h2 className="font-bold text-3xl text-white text-left">Playlists</h2>
+          <h2 className="font-bold text-2xl sm:text-3xl text-white text-left">Playlists</h2>
           <p className="text-sm text-white/70 mt-1">Create playlists and add any song you like.</p>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function Playlists() {
               {!pl.items?.length ? (
                 <div className="mt-4 text-sm text-white/70">No songs yet.</div>
               ) : expanded[pl.id] ? (
-                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
                   {(playlistSongsById.get(pl.id) || []).map((song: any, i: number) => (
                     <SongCard
                       key={song.key || song.trackId || `${pl.id}_${i}`}

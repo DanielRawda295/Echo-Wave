@@ -136,7 +136,7 @@ If you already have local `.env` files, edit those files instead of overwriting 
 | `SUPABASE_URL` | HTTPS project URL for hosted media storage. |
 | `SUPABASE_SECRET_KEY` | Backend-only `sb_secret_` key used to write/delete media; never expose this through frontend variables. |
 | `SUPABASE_STORAGE_BUCKET` | Public media bucket name; defaults to `echowave-media`. |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google login credentials; the secret stays on the backend. |
+| `GOOGLE_CLIENT_ID` | Public client ID used as the audience for server-side Google ID-token verification; no client secret is required. |
 | `BREVO_API_KEY`, `EMAIL_FROM`, `EMAIL_FROM_NAME` | Backend-only email API key, verified sender address, and optional display name for password-reset delivery. |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` | Optional SMTP fallback for local development only. Render Free uses the HTTPS API above. |
 

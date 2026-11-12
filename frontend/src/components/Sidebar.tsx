@@ -1,118 +1,73 @@
-// src/components/Sidebar.tsx
-
-import React, { useState } from 'react';
+import { useEffect, useRef, useState, type ElementType } from 'react';
 import { NavLink } from 'react-router-dom';
 import { HiOutlineHashtag, HiOutlineHome, HiOutlineMenu, HiOutlinePhotograph, HiOutlineUserGroup } from 'react-icons/hi';
-import { FaRegHeart } from 'react-icons/fa';
-import { FiUser } from 'react-icons/fi';
-import { FiList } from 'react-icons/fi';
-import { FiClock } from 'react-icons/fi';
-import { FiUploadCloud } from 'react-icons/fi';
-import { FiUsers } from 'react-icons/fi';
-import { FiMusic } from 'react-icons/fi';
-import { RiCloseLine } from 'react-icons/ri';
+import { FiClock, FiHeart, FiList, FiMusic, FiUploadCloud, FiUser, FiUsers, FiX } from 'react-icons/fi';
 import { logo } from '../assets';
 
-/**
- * Represents a single navigation link item.
- */
-type LinkItem = {
-  /** Display name of the link */
-  name: string;
-
-  /** Path to navigate to */
-  to: string;
-
-  /** Icon component for the link */
-  icon: React.ElementType;
-};
-
-/** Array of navigation links for sidebar */
-const links: LinkItem[] = [
+const links: { name: string; to: string; icon: ElementType }[] = [
   { name: 'Discover', to: '/', icon: HiOutlineHome },
-  { name: 'Around You', to: '/around-you', icon: HiOutlinePhotograph },
-  { name: 'Top Artists', to: '/top-artists', icon: HiOutlineUserGroup },
-  { name: 'Top Charts', to: '/top-charts', icon: HiOutlineHashtag },
-  { name: 'Recently Played', to: '/recently-played', icon: FiClock },
   { name: 'Community', to: '/community', icon: FiUsers },
+  { name: 'Top Charts', to: '/top-charts', icon: HiOutlineHashtag },
+  { name: 'Top Artists', to: '/top-artists', icon: HiOutlineUserGroup },
+  { name: 'Around You', to: '/around-you', icon: HiOutlinePhotograph },
+  { name: 'Favorites', to: '/favorites', icon: FiHeart },
+  { name: 'Playlists', to: '/playlists', icon: FiList },
+  { name: 'Recently Played', to: '/recently-played', icon: FiClock },
   { name: 'Upload', to: '/upload', icon: FiUploadCloud },
   { name: 'My Uploads', to: '/my-uploads', icon: FiMusic },
-  { name: 'Playlists', to: '/playlists', icon: FiList },
-  { name: 'Favorites', to: '/favorites', icon: FaRegHeart },
   { name: 'Account', to: '/account', icon: FiUser },
 ];
 
-/** Props for NavLinks component */
-type NavLinksProps = {
-  /** Optional callback when a link is clicked */
-  handleClick?: () => void;
-};
-
-/**
- * NavLinks Component
- *
- * Renders the sidebar navigation links with icons.
- * Supports a click callback for mobile menu closure.
- */
-const NavLinks: React.FC<NavLinksProps> = ({ handleClick }) => (
-  <div className="mt-10">
-    {links.map((item) => {
-      const Icon = item.icon;
-      return (
-        <NavLink
-          key={item.name}
-          to={item.to}
-          className="flex flex-row justify-start items-center my-8 text-sm font-medium text-gray-400 hover:text-cyan-400"
-          onClick={() => handleClick && handleClick()}
-        >
-          <Icon className="w-6 h-6 mr-2" />
-          {item.name}
-        </NavLink>
-      );
-    })}
-  </div>
+const NavLinks = ({ onNavigate }: { onNavigate?: () => void }) => (
+  <nav aria-label="Main navigation" className="mt-6 space-y-1">
+    {links.map(({ name, to, icon: Icon }) => (
+      <NavLink key={to} to={to} end={to === '/'} onClick={onNavigate}
+        className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-indigo-400 ${isActive ? 'bg-indigo-500/15 text-indigo-300' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+        <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />{name}
+      </NavLink>
+    ))}
+  </nav>
 );
 
-/**
- * Sidebar Component
- *
- * Provides a responsive sidebar navigation for desktop and mobile:
- * - Desktop: always visible
- * - Mobile: toggleable menu with smooth transition
- * - Includes logo and navigation links
- */
-const Sidebar: React.FC = () => {
-  /** State for controlling mobile menu visibility */
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+export default function Sidebar() {
+  const [open, setOpen] = useState(false);
+  const drawer = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = drawer.current;
+    if (open && dialog && !dialog.open) dialog.showModal();
+    if (!open && dialog?.open) dialog.close();
+  }, [open]);
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 768px)');
+    const closeOnDesktop = () => { if (query.matches) setOpen(false); };
+    query.addEventListener('change', closeOnDesktop);
+    return () => query.removeEventListener('change', closeOnDesktop);
+  }, []);
 
   return (
     <>
-      {/** Desktop sidebar */}
-      <div className="md:flex hidden flex-col w-[240px] py-10 px-4 bg-[#191624]">
-        <img src={logo} alt="logo" className="w-full h-14 object-contain" />
+      <aside className="hidden w-56 shrink-0 overflow-y-auto border-r border-white/5 bg-[#151321] px-4 py-6 md:block">
+        <NavLink to="/" aria-label="EchoWave home"><img src={logo} alt="EchoWave" className="h-12 w-full object-contain" /></NavLink>
         <NavLinks />
-      </div>
-
-      {/** Mobile menu toggle button */}
-      <div className="absolute md:hidden block top-6 right-3">
-        {!mobileMenuOpen ? (
-          <HiOutlineMenu className="w-6 h-6 mr-2 text-white" onClick={() => setMobileMenuOpen(true)} />
-        ) : (
-          <RiCloseLine className="w-6 h-6 mr-2 text-white" onClick={() => setMobileMenuOpen(false)} />
-        )}
-      </div>
-
-      {/** Mobile sidebar */}
-      <div
-        className={`absolute top-0 h-screen w-2/3 bg-linear-to-tl from-white/10 to-[#483D8B] backdrop-blur-lg z-10 p-6 md:hidden smooth-transition ${
-          mobileMenuOpen ? 'left-0' : '-left-full'
-        }`}
-      >
-        <img src={logo} alt="logo" className="w-full h-14 object-contain" />
-        <NavLinks handleClick={() => setMobileMenuOpen(false)} />
-      </div>
+      </aside>
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 bg-[#151321] px-4 md:hidden">
+        <NavLink to="/" aria-label="EchoWave home"><img src={logo} alt="EchoWave" className="h-9 w-32 object-contain object-left" /></NavLink>
+        <button type="button" aria-label="Open navigation" aria-expanded={open} aria-controls="mobile-navigation"
+          onClick={() => setOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-xl text-white hover:bg-white/10">
+          <HiOutlineMenu size={24} />
+        </button>
+      </header>
+      <dialog ref={drawer} id="mobile-navigation" aria-label="Navigation menu" onCancel={() => setOpen(false)}
+        onClose={() => setOpen(false)} onClick={event => { if (event.target === drawer.current) setOpen(false); }}
+        className="mobile-navigation fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(320px,88vw)] max-w-none border-0 bg-[#151321] p-5 text-white backdrop:bg-black/65">
+        <div onClick={event => event.stopPropagation()}>
+          <div className="flex items-center justify-between">
+            <img src={logo} alt="EchoWave" className="h-10 w-36 object-contain object-left" />
+            <button type="button" aria-label="Close navigation" onClick={() => setOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-white/10"><FiX size={24} /></button>
+          </div>
+          <NavLinks onNavigate={() => setOpen(false)} />
+        </div>
+      </dialog>
     </>
   );
-};
-
-export default Sidebar;
+}

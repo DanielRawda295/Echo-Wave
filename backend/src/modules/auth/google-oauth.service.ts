@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
@@ -20,10 +20,9 @@ export class GoogleOAuthService {
 
   private initializeOAuthClient() {
     const clientId = this.configService.get('GOOGLE_CLIENT_ID');
-    const clientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
     
-    if (clientId && clientSecret) {
-      this.oauthClient = new OAuth2Client(clientId, clientSecret);
+    if (clientId) {
+      this.oauthClient = new OAuth2Client(clientId);
       this.logger.log('Google OAuth client initialized');
     } else {
       this.logger.warn('Google OAuth credentials not configured');
@@ -32,7 +31,7 @@ export class GoogleOAuthService {
 
   async verifyGoogleToken(token: string): Promise<any> {
     if (!this.oauthClient) {
-      throw new Error('Google OAuth not configured');
+      throw new ServiceUnavailableException('Google sign-in is not configured yet. Please use email or guest login.');
     }
 
     try {
@@ -41,10 +40,14 @@ export class GoogleOAuthService {
         audience: this.configService.get('GOOGLE_CLIENT_ID'),
       });
 
-      return ticket.getPayload();
-    } catch (error) {
-      this.logger.error('Failed to verify Google token:', error);
-      throw new Error('Invalid Google token');
+      const payload = ticket.getPayload();
+      if (!payload?.sub || !payload.email || !payload.email_verified) {
+        throw new UnauthorizedException('Google account email is not verified.');
+      }
+      return payload;
+    } catch {
+      this.logger.warn('Google ID token verification failed.');
+      throw new UnauthorizedException('Google sign-in could not be verified. Please try again.');
     }
   }
 
