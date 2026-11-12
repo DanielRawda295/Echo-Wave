@@ -5,6 +5,8 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, type ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -17,6 +19,8 @@ import { ChatModule } from './modules/chat/chat.module';
  * Root application module that imports all feature modules.
  */
 @Module({
+  controllers: [AppController],
+  providers: [AppService],
   imports: [
     ConfigModule,        // Global configuration
     DatabaseModule,      // TypeORM database connection
