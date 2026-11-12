@@ -7,6 +7,7 @@ import { UpdateTrackDto } from './dto/update-track.dto';
 import { TrackLike } from './entities/track-like.entity';
 import { TrackComment } from './entities/track-comment.entity';
 import { CreateTrackCommentDto } from './dto/create-track-comment.dto';
+import { MediaStorageService } from './media-storage.service';
 
 @Injectable()
 export class TracksService {
@@ -14,11 +15,14 @@ export class TracksService {
     @InjectRepository(Track) private repo: Repository<Track>,
     @InjectRepository(TrackLike) private likeRepo: Repository<TrackLike>,
     @InjectRepository(TrackComment) private commentRepo: Repository<TrackComment>,
+    private readonly media: MediaStorageService,
   ) {}
 
   private sanitize(track: any) {
     if (track?.uploader) {
       delete track.uploader.password;
+      delete track.uploader.email;
+      delete track.uploader.googleId;
     }
     return track;
   }
@@ -26,6 +30,8 @@ export class TracksService {
   private sanitizeComment(comment: any) {
     if (comment?.user) {
       delete comment.user.password;
+      delete comment.user.email;
+      delete comment.user.googleId;
     }
     return comment;
   }
@@ -186,8 +192,9 @@ export class TracksService {
   }
 
   async deleteTrack(id: number, uploaderId: number) {
-    await this.mustOwnTrack(id, uploaderId);
+    const track = await this.mustOwnTrack(id, uploaderId);
     await this.repo.delete({ id });
+    await this.media.cleanup([track.fileUrl, track.coverUrl]);
     return { success: true };
   }
 }

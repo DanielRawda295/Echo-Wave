@@ -23,8 +23,8 @@ import { ChatModule } from './modules/chat/chat.module';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
-      playground: true,
-      introspection: true,
+      playground: process.env.NODE_ENV !== 'production',
+      introspection: process.env.NODE_ENV !== 'production',
       useGlobalPrefix: true,
       path: 'graphql',
       context: ({ req, res }) => ({ req, res }),
@@ -34,7 +34,7 @@ import { ChatModule } from './modules/chat/chat.module';
     TracksModule,        // Tracks management module
     PlaylistsModule,     // Playlists management module
     ExternalModule,      // External API integration module
-    ChatModule,          // Local chatbot (Ollama) module
+    ChatModule,          // Local FAQ help module
   ],
 })
 export class AppModule {}

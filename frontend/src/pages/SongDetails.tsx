@@ -27,7 +27,7 @@ import { useGetSongDetailsQuery, useGetTopChartsQuery } from '../redux/services/
 import type { RootState } from '../redux/store';
 import { useToasts } from '../hooks/useToasts';
 import api from '../utils/api';
-import { getBackendOrigin } from '../utils/backendOrigin';
+import { getBackendOrigin, getMediaUrl } from '../utils/backendOrigin';
 import AddToPlaylist from '../components/AddToPlaylist';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 
@@ -175,9 +175,9 @@ const SongDetails: React.FC = () => {
       title: communityTrack.title,
       subtitle: communityTrack.artist,
       images: {
-        coverart: communityTrack.coverUrl ? `${backendOrigin}${communityTrack.coverUrl}` : undefined,
+        coverart: getMediaUrl(communityTrack.coverUrl, backendOrigin),
       },
-      previewUrl: `${backendOrigin}${communityTrack.fileUrl}`,
+      previewUrl: getMediaUrl(communityTrack.fileUrl, backendOrigin),
     };
 
     return (

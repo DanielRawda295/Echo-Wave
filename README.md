@@ -28,7 +28,7 @@ Once deployed, choose **Continue as Guest** on the login page to explore without
 | My Uploads | View, edit metadata for, and delete your own uploaded tracks. |
 | Authentication | Register with email/password, sign in with Google, or start a guest session. |
 | Account settings | Update username, email, and avatar URL; change password, log out, or deactivate an account with password confirmation. |
-| Password recovery | Request an emailed six-digit reset code and submit a new password. Requires configured SMTP delivery. |
+| Password recovery | Request an emailed six-digit reset code and submit a new password. Requires configured Brevo API delivery in production. |
 | Help widget | Ask how to use EchoWave through an in-app assistant backed by local FAQs and documentation. |
 
 Catalog playback uses the preview audio returned by iTunes, rather than full catalog tracks. Community playback uses uploaded audio files. The Top Charts and Top Artists views are built from catalog search results, not an official real-time chart-ranking feed. Around You uses IP-based country detection with a US fallback.
@@ -42,7 +42,7 @@ Catalog playback uses the preview audio returned by iTunes, rather than full cat
 | Backend | NestJS 11, TypeScript, REST controllers, code-first GraphQL with Apollo, DTO validation |
 | Database | PostgreSQL, TypeORM entities and repositories, JSONB playlist items |
 | Authentication | JWT bearer tokens, Passport, bcrypt password hashing, Google ID-token verification |
-| Media and email | Multer uploads to local disk; Nodemailer SMTP for reset emails |
+| Media and email | Multer uploads through the API to Supabase Storage in production (local disk in development); Brevo HTTP API for reset emails (Nodemailer SMTP fallback in local development) |
 | Testing | Jest, Nest testing utilities, Supertest |
 
 The React application calls the NestJS REST API for authentication, accounts, playlists, uploads, likes, comments, and help. RTK Query fetches catalog data directly from iTunes. NestJS also exposes GraphQL queries and playlist/engagement mutations at `/api/graphql`; the current pages primarily use REST.
@@ -52,7 +52,7 @@ The help widget uses keyword intent matching and local Markdown knowledge lookup
 ### Data storage
 
 - **PostgreSQL:** users, deactivated-account records, reset codes, playlists, uploaded-track metadata, likes, and comments. Catalog playlist items are stored as JSONB snapshots; playlists also have a relation to uploaded tracks.
-- **Backend filesystem:** uploaded audio and cover images under `backend/uploads/`, served at `/uploads/`. Database rows store the media paths.
+- **Media:** production uploads go to the public Supabase `echowave-media` bucket; development without storage credentials uses `backend/uploads/`, served at `/uploads/`. Database rows store the media URLs, and the frontend accepts both hosted and backend-relative URLs.
 - **Browser:** favorites and recent history are persisted locally and cleared on login/logout. They are not synchronized between devices. JWTs use local storage for remembered logins or session storage for temporary/guest logins.
 
 ## Repository structure
@@ -93,9 +93,9 @@ The `external` backend module currently contains a placeholder search service. C
 - Node.js 22.12 or newer in the Node 22 line, with npm.
 - A running PostgreSQL instance and an empty development database owned by your configured database user.
 - Internet access for iTunes results, country detection, and optional Google sign-in.
-- Google OAuth credentials and SMTP access only if testing those optional integrations.
+- Google OAuth credentials and a Brevo account only if testing those optional integrations.
 
-**Current setup caveats:** the backend manifest/lockfile do not yet declare all imported GraphQL, Google authentication, and mail packages. Its `ignoreDeprecations: "6.0"` setting also conflicts with the TypeScript 5.x dependency range. The frontend production build has unused state variables in `Account.tsx`. These existing issues must be resolved before treating a fresh install or production build as ready for deployment. See [deployment preparation](#deployment-preparation).
+Production preparation is in progress. Run the included database migration and configure Supabase media storage; the API security items in [deployment preparation](#deployment-preparation) still need attention before public deployment.
 
 ### 1. Clone and install
 
@@ -125,10 +125,20 @@ If you already have local `.env` files, edit those files instead of overwriting 
 | Backend variable | Purpose |
 | --- | --- |
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` | PostgreSQL connection fields read by the current TypeORM configuration. |
+| `DATABASE_URL` | Hosted PostgreSQL connection string; takes precedence over local connection fields. A Supabase `[YOUR-PASSWORD]` placeholder is filled from `DB_PASS` with URL encoding. |
+| `DB_SCHEMA` | Schema name; defaults to `echowave` for hosted connections and `public` locally. |
+| `DB_SSL_CA_FILE`, `DB_SSL_CA` | Optional provider CA certificate file or PEM text for verified TLS. |
+| `DB_SYNCHRONIZE` | Set to `false` to disable local automatic schema updates. Hosted connections always disable them. |
 | `JWT_SECRET` | A long random signing secret, unique to your environment. |
 | `JWT_EXPIRES_IN` | Regular login token lifetime; example: `1d`. Guest tokens explicitly use `1d`. |
+| `FRONTEND_ORIGIN` | Exact allowed frontend origin, or comma-separated origins. Defaults to localhost for development; configure it explicitly for production. |
+| `PORT` | Backend listening port supplied by the host; defaults to `3000` locally. |
+| `SUPABASE_URL` | HTTPS project URL for hosted media storage. |
+| `SUPABASE_SECRET_KEY` | Backend-only `sb_secret_` key used to write/delete media; never expose this through frontend variables. |
+| `SUPABASE_STORAGE_BUCKET` | Public media bucket name; defaults to `echowave-media`. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google login credentials; the secret stays on the backend. |
-| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`, `EMAIL_FROM` | Optional SMTP configuration for password-reset email. Current mail transport uses `secure: false` for STARTTLS-style delivery. |
+| `BREVO_API_KEY`, `EMAIL_FROM`, `EMAIL_FROM_NAME` | Backend-only email API key, verified sender address, and optional display name for password-reset delivery. |
+| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS` | Optional SMTP fallback for local development only. Render Free uses the HTTPS API above. |
 
 | Frontend variable | Purpose |
 | --- | --- |
@@ -138,9 +148,13 @@ If you already have local `.env` files, edit those files instead of overwriting 
 
 All frontend `VITE_` values can be exposed in browser assets. Only put public configuration there. Country detection currently calls `api.country.is` without an API key, so a geolocation key is unnecessary.
 
-For Google login, configure your OAuth client with the frontend origin and the matching callback URL. Without OAuth credentials, use email/password or guest login. Without SMTP credentials, password-reset email delivery is unavailable even though the request returns a generic success message.
+For Google login, configure your OAuth client with the frontend origin and the matching callback URL. Without OAuth credentials, use email/password or guest login. Without email credentials, password-reset requests return an unavailable message. With delivery configured, the response stays generic to protect account privacy; check the provider dashboard for delivery failures.
 
-The current database configuration uses separate `DB_*` fields, not `DATABASE_URL`, and enables `synchronize: true`. Start only against a development database: TypeORM creates/updates tables automatically. Media files already in the repository do not automatically create corresponding database rows.
+For local development, the database configuration uses `DB_*` fields and automatically creates/updates tables unless `DB_SYNCHRONIZE=false`. Use only a development database with automatic synchronization. Hosted connections use `DATABASE_URL`, enforce certificate-verified TLS, and always disable automatic synchronization. Their default `echowave` schema keeps app tables outside Supabase's default `public` Data API schema; schema initialization/migrations must be completed before starting against a new hosted database. Media files already in the repository do not automatically create corresponding database rows.
+
+For the guided deployment, save private settings in `backend/.env.deploy.local` (ignored by Git). From `backend`, `npm run db:check:deploy` builds the API and checks the saved database connection without creating tables or changing data. The settings file is not loaded by normal `start:dev`; this keeps local development separate from deployment checks. If the TLS certificate needs a custom root, download the provider's database CA and set `DB_SSL_CA_FILE`; certificate verification stays enabled.
+
+For a new hosted database, `npm run db:migrate:deploy` creates the private `echowave` schema and applies the versioned initial migration in a transaction. It creates eight app tables with row-level security, records the migration, and verifies that the resulting schema matches the entities. Subsequent runs apply only pending migrations. It refuses to initialize an existing unmanaged app schema; it does not migrate records or uploaded files from a local database.
 
 ### 3. Start both applications
 
@@ -172,7 +186,9 @@ npm run dev
 4. Upload an MP3 and optional cover; find it in Community and My Uploads.
 5. Open the uploaded song to test likes/comments, then review Account settings.
 
-Each upload field has a 25 MB file-size limit. Audio accepts MP3 files; a cover must be an image. Use media you have permission to publish. Track deletion removes the database record; automatic removal of the underlying disk files is not implemented.
+Each upload field has a 25 MB file-size limit. Audio accepts MP3 files; covers accept JPEG, PNG, and WebP. File headers are checked and storage content types are normalized. Use media you have permission to publish. Track deletion also attempts to remove its media files; failed uploads/database writes trigger cleanup of files already stored. Cleanup failures are logged for follow-up rather than returning provider diagnostics to users.
+
+Production requires the Supabase media settings; it does not fall back to ephemeral local storage when credentials are missing. Create a public `echowave-media` bucket with a 25 MB limit and allow `audio/mpeg`, `audio/mp3`, `image/jpeg`, `image/png`, and `image/webp`. Public reads support published community audio/covers; writes go through the authenticated NestJS API. With credentials saved privately in `.env.deploy.local`, run `npm run storage:check:deploy` from `backend` for a read-only bucket configuration check.
 
 ## API overview
 
@@ -204,6 +220,10 @@ Run commands inside the indicated application folder.
 | `backend` | `npm run start:dev` | Nest watch server |
 | `backend` | `npm run build` | Compile NestJS into `dist/` |
 | `backend` | `npm run start:prod` | Start the compiled backend |
+| `backend` | `npm run db:check:deploy` | Read-only connection check using private deployment settings |
+| `backend` | `npm run db:migrate:deploy` | Initialize/update the hosted app schema using versioned migrations |
+| `backend` | `node --env-file=.env.deploy.local scripts/check-email.cjs` | Send one delivery test to the configured sender |
+| `backend` | `npm run storage:check:deploy` | Check the hosted public media bucket with private backend credentials |
 | `backend` | `npm test -- --runInBand` | Run Jest unit tests |
 | `backend` | `npm test -- --runInBand auth.service.spec.ts` | Test isolated guest accounts, token creation, and database-failure behavior |
 | `backend` | `npm run test:e2e` | Existing Supertest starter test; requires backend dependencies/database and needs updating to the current routes |
@@ -220,14 +240,13 @@ A frontend `.env` containing a geolocation API key was previously committed. Rem
 
 The project is a portfolio demo under active preparation, with no admin panel currently implemented. Before public deployment:
 
-- Resolve missing backend runtime dependency declarations (`@nestjs/graphql`, `@nestjs/apollo`, their Apollo/GraphQL runtime peers, `google-auth-library`, and `nodemailer`) and align TypeScript configuration with the locked compiler.
-- Fix frontend production TypeScript errors and verify clean installs/builds in both folders.
-- Read the host-provided port in NestJS instead of hardcoding `3000`, restrict CORS to the deployed frontend, and configure database TLS as required by your host.
-- Replace automatic schema synchronization with reviewed database migrations; no migration files are currently included.
-- Move uploads to durable storage or attach a persistent disk; ephemeral hosting filesystems cannot preserve runtime uploads. Existing media URLs currently assume backend-relative paths, so adapt those helpers if changing to absolute object-storage URLs.
-- Review access controls and response serialization: some REST user/list endpoints and playlist relations currently return raw entities that can include password hashes. Remove sensitive fields and restrict access before connecting real user data.
-- Remove authentication-token and reset-code debug logging; review reset-code reuse, rate limiting, and guest-account cleanup before accepting public traffic.
-- Disable or restrict the GraphQL development playground as appropriate, configure email delivery for the host, and add an SPA rewrite to `index.html` for frontend routes.
+- Verify clean installs/builds in both folders with the locked dependencies.
+- Set `FRONTEND_ORIGIN` to the deployed frontend address and configure database TLS as required by your host. The server reads the host-provided `PORT`.
+- Apply the included initial migration to a new hosted database and create new reviewed migrations for future entity changes. Hosted connections disable automatic schema synchronization.
+- Configure and verify the Supabase media bucket. Existing local database records and local files are not automatically imported into the new hosted database/bucket.
+- Password hashes are excluded from default database reads; public user responses contain only ID, username, and avatar. Playlist list/read operations require ownership. Review access controls again whenever adding new endpoints.
+- Reset codes are single-use and no longer logged. Authentication endpoints allow ten requests per route/IP/minute on a single instance. These in-memory counters reset on restart; review stronger abuse controls and guest-account cleanup as usage grows.
+- GraphQL playground and introspection are disabled in production. Configure and verify Brevo email delivery, and add an SPA rewrite to `index.html` for frontend routes.
 - Set deployed API/OAuth URLs, verify the complete guest/account/media flow, and replace the live-demo URL placeholder above.
 
 ## Author and license

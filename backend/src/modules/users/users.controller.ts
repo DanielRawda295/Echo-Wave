@@ -29,7 +29,9 @@ export class UsersController {
 
   @Get(':id')
   getUserById(@Param('id') id: number) {
-    return this.usersService.findById(id);
+    return this.usersService.findById(id).then(user => user
+      ? { id: user.id, username: user.username, avatar: user.avatar }
+      : null);
   }
 
   @Get()

@@ -94,7 +94,7 @@ export default function UploadSong() {
             <input
               className="mt-2 w-full text-sm text-white/80"
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               onChange={(e) => setCover(e.target.files?.[0] || null)}
             />
           </div>

@@ -32,8 +32,6 @@ The default frontend URL is `http://localhost:5173`. Set `VITE_API_URL=http://lo
 | `npm run preview` | Preview the built website locally |
 | `npm run lint` | Run ESLint |
 
-The current production TypeScript check reports unused `passwordToast`/`setPasswordToast` state in `src/pages/Account.tsx`; resolve that before deploying.
-
 ## Data and configuration
 
 Catalog results and preview audio come from iTunes. Community data, accounts, and playlists use the NestJS API. Favorites and recently played tracks are browser-local, and login/logout clears them; they do not sync across devices.

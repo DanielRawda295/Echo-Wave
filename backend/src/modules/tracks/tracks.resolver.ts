@@ -8,7 +8,6 @@ function toUserPublic(user: any) {
   if (!user) return undefined;
   return {
     id: user.id,
-    email: user.email,
     username: user.username,
     avatar: user.avatar ?? null,
     role: user.role,

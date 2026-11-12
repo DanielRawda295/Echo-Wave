@@ -26,7 +26,7 @@ import { Error, Loader, SongCard } from '../components';
 import { useGetSearchSongsQuery, type Song } from '../redux/services/MusicApi';
 import type { RootState } from '../redux/store';
 import api from '../utils/api';
-import { getBackendOrigin } from '../utils/backendOrigin';
+import { getBackendOrigin, getMediaUrl } from '../utils/backendOrigin';
 
 /**
  * Search Functional Component
@@ -100,8 +100,8 @@ const Search: React.FC = () => {
           key: `user_${t.id}`,
           title: t.title,
           subtitle: t.artist,
-          images: { coverart: t.coverUrl ? `${backendOrigin}${t.coverUrl}` : undefined },
-          previewUrl: `${backendOrigin}${t.fileUrl}`,
+          images: { coverart: getMediaUrl(t.coverUrl, backendOrigin) },
+          previewUrl: getMediaUrl(t.fileUrl, backendOrigin),
           _trackId: t.id,
           _genre: t.genre,
           _source: 'community',

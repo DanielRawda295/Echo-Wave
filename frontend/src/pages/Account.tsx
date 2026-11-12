@@ -32,7 +32,6 @@ export default function Account() {
   const [emailState, setEmailState] = useState<SaveState>('idle');
   const [avatarState, setAvatarState] = useState<SaveState>('idle');
   const [passwordState, setPasswordState] = useState<SaveState>('idle');
-  const [passwordToast, setPasswordToast] = useState('');
 
   const [usernameError, setUsernameError] = useState('');
   const [emailError, setEmailError] = useState('');

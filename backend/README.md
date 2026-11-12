@@ -24,7 +24,7 @@ npm ci
 npm run start:dev
 ```
 
-**Fresh-install blockers:** the checked-in manifest/lockfile are missing imported GraphQL/Apollo, Google authentication, and Nodemailer dependencies. The TypeScript `ignoreDeprecations: "6.0"` setting also needs aligning with the declared TypeScript 5.x range. Fix these before expecting the commands to work on a clean clone; see the root README.
+The dependency manifest includes the GraphQL/Apollo, Google authentication, and Nodemailer packages used by the source. Review the root README's remaining deployment items before publishing the API.
 
 | Address | Purpose |
 | --- | --- |
@@ -33,7 +33,7 @@ npm run start:dev
 | `http://localhost:3000/api/graphql` | GraphQL endpoint and development playground |
 | `http://localhost:3000/uploads/` | Uploaded-file URL prefix |
 
-Protected operations use `Authorization: Bearer <token>`. Google login requires both Google environment values in the current service. Password-reset delivery needs the `EMAIL_*` SMTP settings.
+Protected operations use `Authorization: Bearer <token>`. Google login requires both Google environment values in the current service. Production password-reset delivery uses `BREVO_API_KEY` and a verified `EMAIL_FROM` sender through the Brevo HTTPS API. `EMAIL_FROM_NAME` defaults to EchoWave. SMTP settings are used only as a local-development fallback. Reset codes expire after ten minutes, are consumed once, and allow three requests per email per hour; codes are never printed in server logs.
 
 ## Commands
 
@@ -48,6 +48,10 @@ Protected operations use `Authorization: Bearer <token>`. Google login requires 
 
 ## Storage and deployment notes
 
-The database currently uses separate `DB_*` settings with automatic TypeORM schema synchronization, intended for development. Reviewed migrations are needed before production. Uploads are written under `uploads/audio` and `uploads/images`; each file is limited to 25 MB. Persist those files outside an ephemeral server filesystem. Deleting track metadata does not currently delete the disk file.
+Local development uses separate `DB_*` settings with automatic TypeORM schema synchronization. Hosted connections use `DATABASE_URL`, verified TLS, the `echowave` schema by default, and no automatic synchronization. Save private deployment settings in `.env.deploy.local` and run `npm run db:check:deploy` to check the connection without changing data. If the Supabase URL contains `[YOUR-PASSWORD]`, `DB_PASS` supplies the password with safe URL encoding.
 
-New runtime uploads and real environment files are ignored by the root `.gitignore`. Previously committed sample media remains tracked. Before public deployment, address raw-entity responses that can expose password hashes, remove token/reset-code debug logs, review rate limits and reset-code reuse, restrict CORS, and read a host-provided listening port. The main README lists the current deployment work explicitly.
+Run `npm run db:migrate:deploy` for the versioned initial schema migration. It creates eight app tables in `echowave` with row-level security and verifies that the schema matches the entity definitions. A repeat run applies only pending migrations. Existing unmanaged tables cause initialization to stop rather than overwrite them. Future entity changes require a new migration.
+
+Production uploads use Supabase Storage. Configure backend-only `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (an `sb_secret_` key), and `SUPABASE_STORAGE_BUCKET=echowave-media`. Create that bucket as public, limit files to 25 MB, and allow MP3/JPEG/PNG/WebP MIME types. `npm run storage:check:deploy` checks its configuration without changing files. The API validates file headers and normalizes content types. When no media credentials are configured in development, uploads use `uploads/audio` and `uploads/images`; production never falls back to local disk. Track deletion and failed uploads attempt media cleanup.
+
+New runtime uploads and real environment files are ignored by the root `.gitignore`. Previously committed sample media remains tracked. The server reads `PORT` and uses `FRONTEND_ORIGIN` for CORS. Before public deployment, address raw-entity responses that can expose password hashes, remove token/reset-code debug logs, and review rate limits and reset-code reuse. The main README lists the current deployment work explicitly.

@@ -73,7 +73,8 @@ export class GoogleOAuthService {
       this.logger.log(`Linking Google account to existing user: ${payload.email}`);
       user.googleId = payload.sub;
       user.avatar = payload.picture;
-      await this.usersService.update(user.id, user);
+      // Do not pass the loaded password hash into the password-update path.
+      await this.usersService.linkGoogleAccount(user.id, payload.sub, payload.picture);
     }
 
     // Generate JWT token

@@ -469,12 +469,6 @@ export default function Login() {
 
       setFormError(errorMessage);
 
-      console.error('Login error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        stack: err.stack,
-      });
     } finally {
       setIsLoading(false);
     }
@@ -553,32 +547,19 @@ export default function Login() {
    */
   const handleForgotPassword = async (email: string) => {
   try {
-    // Call API but do NOT let errors stop the flow
-    const res = await api
-      .post('/auth/forgot-password', { email })
-      .catch(() => ({
-        data: {
-          message:
-            'If an account exists with this email, you will receive an OTP.',
-        },
-      }));
+    const res = await api.post('/auth/forgot-password', { email });
 
     const serverMessage =
       res?.data?.message ||
       'If an account exists with this email, you will receive an OTP.';
 
-    alert(
-      `${serverMessage}\n\nIf this email is registered, an OTP has been sent.`,
-    );
+    alert(serverMessage);
 
-    // ALWAYS continue to OTP modal
     setResetEmail(email);
     setShowForgotPassword(false);
     setShowResetPassword(true);
-  } catch (err) {
-    // This should almost never run anymore, but kept for safety
-    console.error('Forgot password unexpected error:', err);
-    alert('Something went wrong, please try again.');
+  } catch {
+    throw new Error('Password-reset email is temporarily unavailable. Please try again later.');
   }
 };
 

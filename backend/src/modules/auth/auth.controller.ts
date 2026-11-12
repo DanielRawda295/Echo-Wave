@@ -1,4 +1,5 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { AuthRateLimitGuard } from '../../common/guards/auth-rate-limit.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -7,6 +8,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Controller('auth')
+@UseGuards(AuthRateLimitGuard)
 export class AuthController {
   constructor(private authService: AuthService) {}
 

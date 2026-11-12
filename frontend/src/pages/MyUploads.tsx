@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { SongCard } from '../components';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../redux/store';
-import { getBackendOrigin } from '../utils/backendOrigin';
+import { getBackendOrigin, getMediaUrl } from '../utils/backendOrigin';
 import { useToasts } from '../hooks/useToasts';
 
 type Track = {
@@ -69,8 +69,8 @@ export default function MyUploads() {
       key: `user_${t.id}`,
       title: t.title,
       subtitle: t.artist,
-      images: { coverart: t.coverUrl ? `${backendOrigin}${t.coverUrl}` : undefined },
-      previewUrl: `${backendOrigin}${t.fileUrl}`,
+      images: { coverart: getMediaUrl(t.coverUrl, backendOrigin) },
+      previewUrl: getMediaUrl(t.fileUrl, backendOrigin),
       _trackId: t.id,
       _genre: t.genre,
     }));

@@ -6,8 +6,8 @@ export class UserGql {
   @Field(() => Int)
   id!: number;
 
-  @Field()
-  email!: string;
+  @Field(() => String, { nullable: true })
+  email?: string;
 
   @Field()
   username!: string;

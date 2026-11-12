@@ -28,7 +28,17 @@ export class UsersService {
   }
 
   findByEmail(email: string) {
-    return this.repo.findOne({ where: { email } });
+    return this.repo.createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
+  }
+
+  private findWithPassword(id: number) {
+    return this.repo.createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.id = :id', { id })
+      .getOne();
   }
 
   async isDeactivatedEmail(email: string) {
@@ -40,8 +50,12 @@ export class UsersService {
     return this.repo.findOne({ where: { id } });
   }
 
+  async linkGoogleAccount(id: number, googleId: string, avatar?: string) {
+    await this.repo.update(id, { googleId, ...(avatar ? { avatar } : {}) });
+  }
+
   findAll() {
-    return this.repo.find();
+    return this.repo.find({ select: ['id', 'username', 'avatar'] });
   }
 
   private validatePassword(password: string): { isValid: boolean; error?: string } {
@@ -85,7 +99,7 @@ export class UsersService {
   }
 
   async changePassword(id: number, currentPassword: string | undefined, newPassword: string) {
-    const user = await this.repo.findOne({ where: { id } });
+    const user = await this.findWithPassword(id);
     if (!user) throw new NotFoundException('User not found');
 
     const validation = this.validatePassword(newPassword);
@@ -117,7 +131,7 @@ export class UsersService {
       throw new BadRequestException('Passwords do not match');
     }
 
-    const user = await this.repo.findOne({ where: { id } });
+    const user = await this.findWithPassword(id);
     if (!user) throw new NotFoundException('User not found');
 
     if (!user.password) {

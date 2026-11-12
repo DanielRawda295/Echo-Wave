@@ -188,59 +188,27 @@ export class AuthService {
    * Forgot password: generate OTP and send
    */
   async forgotPassword(dto: ForgotPasswordDto) {
-  this.logger.log(`Forgot password request for: ${dto.email}`);
-
-  try {
+    this.otpService.assertDeliveryAvailable();
     const user = await this.usersService.findByEmail(dto.email);
-
-    // Always return success response, even if user doesn’t exist
-    if (!user) {
-      this.logger.warn(`Email not found: ${dto.email}`);
-      return {
-        success: true,
-        message:
-          'If an account exists with this email, you will receive an OTP shortly.',
-      };
+    if (user) {
+      try {
+        const otp = await this.otpService.generateOtp(dto.email);
+        await this.otpService.sendOtpEmail(dto.email, otp);
+      } catch {
+        // Keep the same response for registered and unregistered addresses.
+        this.logger.warn('Reset-code request could not be completed.');
+      }
     }
-
-    // Try generating + sending OTP — but never throw to frontend
-    try {
-      const otp = await this.otpService.generateOtp(dto.email);
-      await this.otpService.sendOtpEmail(dto.email, otp);
-      this.logger.log(`OTP sent to: ${dto.email}`);
-    } catch (err) {
-      // Log but DO NOT throw
-      this.logger.error('Failed to send OTP email:', err);
-    }
-
     return {
       success: true,
-      message:
-        'If an account exists with this email, you will receive an OTP shortly.',
-    };
-
-  } catch (error) {
-    // Catch ALL other unexpected issues
-    this.logger.error('Forgot password critical error:', error);
-
-    return {
-      success: true,
-      message:
-        'If an account exists with this email, you will receive an OTP shortly.',
+      message: 'If an account exists with this email, you will receive a reset code shortly.',
     };
   }
-}
 
   /**
    * Reset password using OTP
    */
   async resetPassword(dto: ResetPasswordDto) {
-  const validOtp = await this.otpService.validateOtp(dto.email, dto.otp);
-
-  if (!validOtp) {
-    throw new BadRequestException('Invalid or expired OTP');
-  }
-
   const pwCheck = this.validatePassword(dto.newPassword);
   if (!pwCheck.isValid) {
     throw new BadRequestException(pwCheck.error);
@@ -256,6 +224,10 @@ export class AuthService {
     throw new BadRequestException(
       'New password cannot be the same as your current password',
     );
+  }
+
+  if (!await this.otpService.validateOtp(dto.email, dto.otp)) {
+    throw new BadRequestException('Invalid or expired OTP');
   }
 
   // ❗ IMPORTANT: pass PLAIN password here, let UsersService.update() hash it

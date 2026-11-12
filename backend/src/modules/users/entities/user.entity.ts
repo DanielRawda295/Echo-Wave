@@ -10,7 +10,7 @@ export class User {
   @IsEmail()
   email: string;
 
-  @Column({ nullable: true }) // Add nullable: true
+  @Column({ nullable: true, select: false })
   @IsOptional()
   @IsString()
   password?: string; // Make it optional

@@ -1,134 +1,47 @@
-import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
+import { randomInt } from 'node:crypto';
 import { Otp } from './entities/otp.entity';
-import * as crypto from 'crypto';
 import { MailService } from './mail.service';
 
 @Injectable()
-export class OtpService implements OnModuleInit {
-  private readonly logger = new Logger(OtpService.name);
-
+export class OtpService {
   constructor(
-  @InjectRepository(Otp)
-  private otpRepository: Repository<Otp>,
-  private mailService: MailService,
-) {}
+    @InjectRepository(Otp) private readonly otpRepository: Repository<Otp>,
+    private readonly mailService: MailService,
+  ) {}
 
-  async onModuleInit() {
-    this.logger.log('OTP Service initialized');
-    this.logger.log(
-      `OTP Repository available: ${!!this.otpRepository}`,
-    );
+  assertDeliveryAvailable(): void {
+    if (!this.mailService.isAvailable()) {
+      throw new ServiceUnavailableException('Password-reset email is temporarily unavailable.');
+    }
   }
 
-  /**
-   * Generate a random 6-digit OTP for a given email
-   */
   async generateOtp(email: string): Promise<string> {
-    try {
-      // Random 6-digit code, padded if needed
-      const otp = crypto
-        .randomInt(100000, 1000000)
-        .toString()
-        .padStart(6, '0');
-
-      // Remove previous OTPs for this email
-      await this.otpRepository.delete({ email });
-
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-      // Check resend limit: max 3 per hour
-const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-const recentOtps = await this.otpRepository.count({
-  where: { email, expiresAt: MoreThan(oneHourAgo) },
-});
-
-if (recentOtps >= 3) {
-  throw new BadRequestException("Too many OTP requests. Try again later.");
-}
-
-
-      const otpRecord = this.otpRepository.create({
-        email,
-        code: otp,
-        expiresAt,
-        isUsed: false,
-      });
-
-      await this.otpRepository.save(otpRecord);
-
-      this.logOtpToConsole(email, otp, expiresAt);
-
-      return otp;
-    } catch (error) {
-      this.logger.error('Failed to generate OTP:', error);
-
-      // Fallback simple OTP
-      const fallbackOtp = Math.floor(100000 + Math.random() * 900000)
-        .toString()
-        .padStart(6, '0');
-
-      const fallbackExpires = new Date(Date.now() + 10 * 60 * 1000);
-
-      this.logOtpToConsole(email, fallbackOtp, fallbackExpires);
-
-      return fallbackOtp;
-    }
-  }
-
-  private logOtpToConsole(email: string, otp: string, expiresAt: Date) {
-    console.log('\n' + '='.repeat(50));
-    console.log('📧 PASSWORD RESET OTP (DEV CONSOLE LOG)');
-    console.log('='.repeat(50));
-    console.log(`Email:   ${email}`);
-    console.log(`OTP:     ${otp}`);
-    console.log(
-      `Expires: ${expiresAt.toISOString()} (10 minutes from generation)`,
-    );
-    console.log('='.repeat(50) + '\n');
-
-    this.logger.log(`OTP generated for ${email}: ${otp}`);
-  }
-
-  
-  async sendOtpEmail(email: string, otp: string) {
-  await this.mailService.sendOtp(email, otp);
-}
-
-  /**
-   * Strict OTP validation:
-   * - Must be 6 digits
-   * - Must exist in DB
-   * - Must not be used
-   * - Must not be expired
-   */
-  async validateOtp(email: string, otp: string): Promise<boolean> {
-  try {
-    const otpRecord = await this.otpRepository.findOne({
-      where: { email, code: otp }
+    // Keep recent records so resending cannot bypass the hourly limit.
+    const recent = await this.otpRepository.count({
+      where: { email, createdAt: MoreThan(new Date(Date.now() - 60 * 60 * 1000)) },
     });
-
-    // No record
-    if (!otpRecord) {
-      this.logger.warn(`OTP not found for ${email}`);
-      return false;
-    }
-
-    // Expired
-    if (otpRecord.expiresAt < new Date()) {
-      this.logger.warn(`OTP expired for ${email}`);
-      await this.otpRepository.delete({ email });
-      return false;
-    }
-
-    // VALID & NOT EXPIRED — DO NOT MARK AS USED (Option 2)
-    return true;
-
-  } catch (error) {
-    this.logger.error('OTP validation error:', error);
-    return false;
+    if (recent >= 3) throw new BadRequestException('Too many reset requests. Try again later.');
+    const code = randomInt(100000, 1000000).toString();
+    await this.otpRepository.update({ email, isUsed: false }, { isUsed: true });
+    await this.otpRepository.save(this.otpRepository.create({
+      email, code, expiresAt: new Date(Date.now() + 10 * 60 * 1000), isUsed: false,
+    }));
+    return code;
   }
-}
 
+  async sendOtpEmail(email: string, otp: string): Promise<void> {
+    await this.mailService.sendOtp(email, otp);
+  }
+
+  async validateOtp(email: string, otp: string): Promise<boolean> {
+    if (!/^\d{6}$/.test(otp)) return false;
+    // Consume atomically: concurrent requests cannot reuse the same code.
+    const result = await this.otpRepository.update({
+      email, code: otp, isUsed: false, expiresAt: MoreThan(new Date()),
+    }, { isUsed: true });
+    return result.affected === 1;
+  }
 }

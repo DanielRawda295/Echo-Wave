@@ -22,9 +22,10 @@ export class PlaylistsController {
     return this.playlistsService.findMine(req.user.sub);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.playlistsService.findAll();
+  findAll(@Req() req) {
+    return this.playlistsService.findMine(req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)

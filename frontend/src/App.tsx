@@ -45,7 +45,6 @@ const GoogleCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        console.log('Google callback URL:', window.location.href);
         
         // Check URL hash for tokens (OIDC implicit flow)
         const hash = window.location.hash.substring(1);
@@ -60,9 +59,6 @@ const GoogleCallback = () => {
         const queryErrorDescription = queryParams.get('error_description');
         const code = queryParams.get('code');
         
-        console.log('URL hash:', hash);
-        console.log('Access token from hash:', accessToken);
-        console.log('ID token from hash:', idToken ? 'present' : 'missing');
 
         if (hashError || queryError) {
           setError(`Google authentication failed: ${hashErrorDescription || hashError || queryErrorDescription || queryError}`);
@@ -98,7 +94,6 @@ const GoogleCallback = () => {
               return;
             }
           } catch (backendError) {
-            console.error('Backend Google login error:', backendError);
             setError('Google authentication failed. Backend rejected the token.');
             return;
           }
@@ -108,7 +103,6 @@ const GoogleCallback = () => {
         setError('Google authentication failed. No valid token received.');
         
       } catch (err) {
-        console.error('Google callback error:', err);
         setError('Authentication failed. Please try again.');
       } finally {
         setLoading(false);
