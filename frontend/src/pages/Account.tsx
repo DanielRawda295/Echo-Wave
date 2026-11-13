@@ -152,11 +152,8 @@ export default function Account() {
       });
       setCurrentPassword('');
       setNewPassword('');
-      setPasswordState('saved');
-      showToast('Password changed successfully');
-      window.setTimeout(() => {
-        setPasswordState('idle');
-      }, 2000);
+      logout();
+      navigate('/login', { replace: true, state: { passwordChanged: true } });
     } catch (err: any) {
       const msg =
         err?.response?.data?.message?.message ||

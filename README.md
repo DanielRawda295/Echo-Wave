@@ -6,11 +6,7 @@ Built by [Daniel Rawda](https://github.com/DanielRawda295) as a web development 
 
 ## Live demo
 
-**Deployment pending.**
-
-**Website URL:** `YOUR_DEPLOYED_WEBSITE_URL_HERE`
-
-<!-- After deployment, replace the placeholder above with the real HTTPS URL. -->
+**Website:** [echowave-web.onrender.com](https://echowave-web.onrender.com)
 
 Once deployed, choose **Continue as Guest** on the login page to explore without registering. Every guest login creates a separate listener account. The guest token is kept in the browser tab's session storage and expires after one day; the account and its database records are not automatically deleted when the tab closes.
 
@@ -228,7 +224,7 @@ Run commands inside the indicated application folder.
 | `backend` | `npm test -- --runInBand auth.service.spec.ts` | Test isolated guest accounts, token creation, and database-failure behavior |
 | `backend` | `npm run test:e2e` | Existing Supertest starter test; requires backend dependencies/database and needs updating to the current routes |
 
-Test coverage is limited; the repository does not yet have a frontend automated test suite or a complete end-to-end feature suite.
+The frontend also provides `npm test` for OAuth callback regression tests. Coverage remains limited; a complete end-to-end feature suite is still needed. See [QA fixes and release checklist](docs/QA-FIXES.md) for the pending migration, deployment order, and manual acceptance checks.
 
 ## Environment-file hygiene
 

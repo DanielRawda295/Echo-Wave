@@ -157,7 +157,7 @@ const SongDetails: React.FC = () => {
    * Displays loading indicator while both song details and related songs are being fetched.
    * Ensures complete data availability before rendering the full interface.
    */
-  if (isFetchingRelated || isFetchingSongDetails || communityLoading) {
+  if ((!isCommunity && (isFetchingRelated || isFetchingSongDetails)) || communityLoading) {
     return <Loader title="Loading song details..." />;
   }
 
@@ -167,7 +167,7 @@ const SongDetails: React.FC = () => {
    * Displays error component if either song details or related songs fetching fails.
    * Provides graceful error handling for partial data failures.
    */
-  if ((!isCommunity && songError) || relatedError || (isCommunity && communityError)) return <Error />;
+  if ((!isCommunity && (songError || relatedError)) || (isCommunity && communityError)) return <Error />;
 
   if (isCommunity && communityTrack) {
     const song = {

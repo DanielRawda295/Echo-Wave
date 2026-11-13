@@ -12,6 +12,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { DeactivatedAccount } from './entities/deactivated-account.entity';
+import { MediaStorageService } from '../tracks/media-storage.service';
+import { MediaCleanupJob } from '../tracks/entities/media-cleanup-job.entity';
+import { Track } from '../tracks/entities/track.entity';
 
 @Injectable()
 export class UsersService {
@@ -20,6 +23,7 @@ export class UsersService {
     private repo: Repository<User>,
     @InjectRepository(DeactivatedAccount)
     private deactivatedRepo: Repository<DeactivatedAccount>,
+    private readonly media: MediaStorageService,
   ) {}
 
   create(data: Partial<User>) {
@@ -46,8 +50,24 @@ export class UsersService {
     return !!row;
   }
 
+  async isDeactivatedGoogleId(googleId: string) {
+    return !!await this.deactivatedRepo.findOne({ where: { googleId } });
+  }
+
   findById(id: number) {
     return this.repo.findOne({ where: { id } });
+  }
+
+  findByGoogleId(googleId: string) {
+    return this.repo.findOne({ where: { googleId } });
+  }
+
+  private async replacePassword(id: number, password: string) {
+    const hashed = await bcrypt.hash(password, 10);
+    await this.repo.createQueryBuilder().update(User)
+      .set({ password: hashed, tokenVersion: () => '"tokenVersion" + 1' })
+      .where('id = :id', { id }).execute();
+    return this.findById(id);
   }
 
   async linkGoogleAccount(id: number, googleId: string, avatar?: string) {
@@ -122,8 +142,7 @@ export class UsersService {
       }
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    return this.repo.save(user);
+    return this.replacePassword(id, newPassword);
   }
 
   async deactivateAccount(id: number, password: string, confirmPassword: string) {
@@ -146,14 +165,14 @@ export class UsersService {
       throw new BadRequestException('Password is incorrect');
     }
 
-    await this.deactivatedRepo.save(
-      this.deactivatedRepo.create({
-        email: user.email,
-        googleId: user.googleId,
-      })
-    );
-
-    await this.repo.delete({ id });
+    await this.repo.manager.transaction(async manager => {
+      const tracks = await manager.getRepository(Track).find({ where: { uploader: { id } } });
+      const urls = [...new Set(tracks.flatMap(track => [track.fileUrl, track.coverUrl]).filter((url): url is string => !!url))];
+      if (urls.length) await manager.getRepository(MediaCleanupJob).upsert(urls.map(url => ({ url })), ['url']);
+      await manager.getRepository(DeactivatedAccount).save({ email: user.email, googleId: user.googleId });
+      await manager.getRepository(User).delete({ id });
+    });
+    await this.media.drainQueue();
     return { success: true };
   }
 
@@ -162,7 +181,7 @@ export class UsersService {
     if (!user) return null;
 
     if (dto.password) {
-      dto.password = await bcrypt.hash(dto.password, 10);
+      return this.replacePassword(id, dto.password);
     }
 
     Object.assign(user, dto);

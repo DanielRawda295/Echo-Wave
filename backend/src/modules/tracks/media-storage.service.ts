@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, Optional, ServiceUnavailableException, type OnModuleInit, type OnModuleDestroy } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { MediaCleanupJob } from './entities/media-cleanup-job.entity';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,9 +10,35 @@ export type MediaFile = { buffer: Buffer; mimetype: string; originalname: string
 type MediaKind = 'audio' | 'images';
 
 @Injectable()
-export class MediaStorageService {
+export class MediaStorageService implements OnModuleInit, OnModuleDestroy {
   private readonly config = mediaStorageConfig(process.env);
   private readonly logger = new Logger(MediaStorageService.name);
+  private timer?: ReturnType<typeof setInterval>;
+  private draining = false;
+
+  constructor(@Optional() private readonly source?: DataSource) {}
+
+  onModuleInit() {
+    if (!this.source) return;
+    void this.drainQueue();
+    this.timer = setInterval(() => { void this.drainQueue(); }, 60000);
+    this.timer.unref();
+  }
+
+  onModuleDestroy() { if (this.timer) clearInterval(this.timer); }
+
+  async drainQueue(): Promise<void> {
+    if (!this.source?.isInitialized || this.draining) return;
+    this.draining = true;
+    try {
+      const jobs = this.source.getRepository(MediaCleanupJob);
+      for (const job of await jobs.find({ order: { id: 'ASC' }, take: 50 })) {
+        try { await this.remove(job.url); await jobs.delete(job.id); }
+        catch { this.logger.warn('Media cleanup is pending and will be retried.'); }
+      }
+    } catch { this.logger.warn('Media cleanup queue is temporarily unavailable.'); }
+    finally { this.draining = false; }
+  }
 
   private fileType(file: MediaFile, kind: MediaKind) {
     const data = file.buffer;

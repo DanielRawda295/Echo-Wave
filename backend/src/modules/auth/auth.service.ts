@@ -139,6 +139,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      version: user.tokenVersion ?? 0,
     });
 
     this.logger.log(`User ${user.email} logged in successfully`);
@@ -173,6 +174,7 @@ export class AuthService {
         sub: user.id,
         email: user.email,
         role: user.role,
+        version: user.tokenVersion ?? 0,
       }, { expiresIn: '1d' }),
     };
   }
@@ -181,7 +183,11 @@ export class AuthService {
    * Google OAuth login
    */
   async googleLogin(dto: GoogleLoginDto) {
-    return this.googleOAuthService.googleLogin(dto.token);
+    return this.googleOAuthService.googleLogin(dto.token, dto.challengeId);
+  }
+
+  googleChallenge() {
+    return this.googleOAuthService.createChallenge();
   }
 
   /**

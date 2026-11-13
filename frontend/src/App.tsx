@@ -2,7 +2,8 @@
  * Main Application Component with Google OAuth Callback
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { consumeGoogleCallback } from './utils/googleOAuth';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import MusicLayout from './Layouts/SIgnUpAndLoginLayout';
@@ -42,74 +43,25 @@ const GoogleCallback = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
+  const started = useRef(false);
   useEffect(() => {
-    const handleCallback = async () => {
+    if (started.current) return;
+    started.current = true;
+    async function finishLogin() {
       try {
-        
-        // Check URL hash for tokens (OIDC implicit flow)
-        const hash = window.location.hash.substring(1);
-        const hashParams = new URLSearchParams(hash);
-        const idToken = hashParams.get('id_token');
-        const accessToken = hashParams.get('access_token');
-        const hashError = hashParams.get('error');
-        const hashErrorDescription = hashParams.get('error_description');
-
-        const queryParams = new URLSearchParams(window.location.search);
-        const queryError = queryParams.get('error');
-        const queryErrorDescription = queryParams.get('error_description');
-        const code = queryParams.get('code');
-        
-
-        if (hashError || queryError) {
-          setError(`Google authentication failed: ${hashErrorDescription || hashError || queryErrorDescription || queryError}`);
-          return;
-        }
-
-        if (code && !idToken) {
-          setError('Google returned an authorization code, but this app is configured for an ID token callback. Update Google OAuth settings or switch to code flow.');
-          return;
-        }
-        
-        if (idToken || accessToken) {
-          // Backend expects an ID token (JWT). If only access_token exists, backend may reject it.
-          try {
-            const response = await api.post('/auth/google-login', {
-              token: idToken || accessToken
-            });
-            
-            if (response.data.access_token) {
-              let persist = true;
-              let next = '/';
-              try {
-                persist = sessionStorage.getItem('echowave.oauth.persist') !== '0';
-                next = sessionStorage.getItem('echowave.oauth.next') || '/';
-                sessionStorage.removeItem('echowave.oauth.persist');
-                sessionStorage.removeItem('echowave.oauth.next');
-              } catch {
-                // ignore
-              }
-
-              login(response.data.access_token, { persist });
-              navigate(next, { replace: true });
-              return;
-            }
-          } catch (backendError) {
-            setError('Google authentication failed. Backend rejected the token.');
-            return;
-          }
-        }
-        
-        // If we get here, something went wrong
-        setError('Google authentication failed. No valid token received.');
-        
-      } catch (err) {
-        setError('Authentication failed. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    handleCallback();
+        const { token, attempt } = consumeGoogleCallback();
+        const response = await api.post('/auth/google-login', { token, challengeId: attempt.challengeId });
+        if (!response.data.access_token) throw new Error('Google sign-in could not be completed.');
+        login(response.data.access_token, { persist: attempt.persist });
+        const next = attempt.next?.startsWith('/') && !attempt.next.startsWith('//') ? attempt.next : '/';
+        navigate(next, { replace: true });
+      } catch (error) {
+        const detail = error as { response?: { data?: { message?: { message?: string } | string } }; message?: string };
+        const message = detail.response?.data?.message;
+        setError(typeof message === 'string' ? message : typeof message?.message === 'string' ? message.message : detail.message || 'Google sign-in failed. Please start again.');
+      } finally { setLoading(false); }
+    }
+    void finishLogin();
   }, [login, navigate]);
 
   if (loading) {

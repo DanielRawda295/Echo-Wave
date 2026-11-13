@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 @Entity()
+@Index('UQ_user_google_subject', ['googleId'], { unique: true, where: '"googleId" IS NOT NULL' })
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -14,6 +15,9 @@ export class User {
   @IsOptional()
   @IsString()
   password?: string; // Make it optional
+
+  @Column({ default: 0 })
+  tokenVersion: number;
 
   @Column({ default: 'listener' })
   role: string;

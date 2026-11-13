@@ -34,7 +34,7 @@ describe('AuthService guest login', () => {
       role: 'listener',
     });
     expect(sign).toHaveBeenCalledWith(
-      { sub: 42, email: account.email, role: 'listener' },
+      { sub: 42, email: account.email, role: 'listener', version: 0 },
       { expiresIn: '1d' },
     );
     expect(result.access_token).toBe('signed-guest-token');

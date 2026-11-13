@@ -32,6 +32,11 @@ export class AuthController {
     return this.authService.googleLogin(dto);
   }
 
+  @Post('google-challenge')
+  googleChallenge() {
+    return this.authService.googleChallenge();
+  }
+
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);

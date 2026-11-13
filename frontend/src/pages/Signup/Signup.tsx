@@ -190,11 +190,7 @@ export default function Signup() {
       return String(value);
     };
 
-    console.error('Registration error details:', {
-      status: err.response?.status,
-      data: err.response?.data,
-      message: err.message,
-    });
+
 
     if (err.response?.data) {
       const errorData = err.response.data;
@@ -268,21 +264,16 @@ export default function Signup() {
 
     setIsSubmitting(true);
 
-    console.log('📤 Sending registration request:', {
-      email,
-      username: username.trim(),
-      passwordLength: password.length,
-      passwordSample: password.substring(0, 2) + '...',
-    });
+
 
     try {
-      const response = await api.post('/auth/register', {
+      await api.post('/auth/register', {
         email,
         username: username.trim(),
         password,
       });
 
-      console.log('✅ Registration successful:', response.data);
+
 
       navigate(`/login?next=${encodeURIComponent(nextParam)}`, { replace: true });
     } catch (err: any) {
@@ -290,16 +281,7 @@ export default function Signup() {
 
       setFormError(errorMessage);
 
-      console.error('Registration error details:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-        requestData: {
-          email,
-          username: username.trim(),
-          passwordLength: password.length,
-        },
-      });
+
     } finally {
       setIsSubmitting(false);
     }

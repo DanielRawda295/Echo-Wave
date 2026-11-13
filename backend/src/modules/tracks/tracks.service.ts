@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Track } from './entities/track.entity';
@@ -8,6 +8,7 @@ import { TrackLike } from './entities/track-like.entity';
 import { TrackComment } from './entities/track-comment.entity';
 import { CreateTrackCommentDto } from './dto/create-track-comment.dto';
 import { MediaStorageService } from './media-storage.service';
+import { MediaCleanupJob } from './entities/media-cleanup-job.entity';
 
 @Injectable()
 export class TracksService {
@@ -132,6 +133,8 @@ export class TracksService {
   }
 
   async addComment(trackId: number, userId: number, dto: CreateTrackCommentDto) {
+    const text = typeof dto.text === 'string' ? dto.text.trim() : '';
+    if (!text || text.length > 500) throw new BadRequestException('Comments must contain 1 to 500 characters.');
     const track = await this.repo.findOne({ where: { id: trackId } });
     if (!track) throw new NotFoundException('Track not found');
 
@@ -139,7 +142,7 @@ export class TracksService {
       this.commentRepo.create({
         track: { id: trackId } as any,
         user: { id: userId } as any,
-        text: dto.text.trim(),
+        text,
       })
     );
 
@@ -193,8 +196,12 @@ export class TracksService {
 
   async deleteTrack(id: number, uploaderId: number) {
     const track = await this.mustOwnTrack(id, uploaderId);
-    await this.repo.delete({ id });
-    await this.media.cleanup([track.fileUrl, track.coverUrl]);
+    await this.repo.manager.transaction(async manager => {
+      const urls = [...new Set([track.fileUrl, track.coverUrl].filter((url): url is string => !!url))];
+      if (urls.length) await manager.getRepository(MediaCleanupJob).upsert(urls.map(url => ({ url })), ['url']);
+      await manager.getRepository(Track).delete({ id });
+    });
+    await this.media.drainQueue();
     return { success: true };
   }
 }

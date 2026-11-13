@@ -22,7 +22,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
-import { Error, Loader, SongCard } from '../components';
+import { Loader, SongCard } from '../components';
 import { useGetSearchSongsQuery, type Song } from '../redux/services/MusicApi';
 import type { RootState } from '../redux/store';
 import api from '../utils/api';
@@ -140,7 +140,7 @@ const Search: React.FC = () => {
    * Displays loading indicator with dynamic title during search execution.
    * Provides user feedback that search is in progress.
    */
-  if (isFetching || communityLoading) return <Loader title={`Searching ${searchTerm}...`} />;
+  if ((scope !== 'community' && isFetching) || (scope !== 'itunes' && communityLoading)) return <Loader title={`Searching ${searchTerm}...`} />;
 
   /**
    * Error State Handling
@@ -148,14 +148,7 @@ const Search: React.FC = () => {
    * Displays error component if search API request fails.
    * Includes console logging for debugging and monitoring purposes.
    */
-  if (error) {
-    console.error('Search error:', error);
-    return <Error />;
-  }
 
-  if (communityError) {
-    console.error('Community search error:', communityError);
-  }
 
   /**
    * Search Results Page Render
@@ -168,6 +161,8 @@ const Search: React.FC = () => {
    */
   return (
     <div className="flex flex-col">
+      {error && scope !== 'community' && <p role="status" className="mb-4 text-sm text-amber-200">The iTunes catalog is temporarily unavailable. Community results are still available.</p>}
+      {communityError && scope !== 'itunes' && <p role="status" className="mb-4 text-sm text-amber-200">Community search is temporarily unavailable. Catalog results are still available.</p>}
     
       <h2 className="font-bold text-2xl sm:text-3xl text-white text-left mt-4 mb-10">
         Showing results for <span className="font-black">{searchTerm}</span>

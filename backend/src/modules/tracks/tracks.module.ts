@@ -6,11 +6,11 @@ import { TrackComment } from './entities/track-comment.entity';
 import { TracksService } from './tracks.service';
 import { TracksController } from './tracks.controller';
 import { TracksResolver } from './tracks.resolver';
-import { MediaStorageService } from './media-storage.service';
+import { MediaStorageModule } from './media-storage.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Track, TrackLike, TrackComment])],
-  providers: [TracksService, TracksResolver, MediaStorageService],
+  imports: [TypeOrmModule.forFeature([Track, TrackLike, TrackComment]), MediaStorageModule],
+  providers: [TracksService, TracksResolver],
   controllers: [TracksController],
 })
 export class TracksModule {}

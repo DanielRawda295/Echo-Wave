@@ -1,4 +1,5 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
@@ -9,6 +10,20 @@ import { UnauthorizedException } from '@nestjs/common';
 export class GoogleOAuthService {
   private readonly logger = new Logger(GoogleOAuthService.name);
   private oauthClient: OAuth2Client;
+  private readonly challenges = new Map<string, { nonce: string; expires: number }>();
+
+  createChallenge() {
+    if (!this.oauthClient) throw new ServiceUnavailableException('Google sign-in is not configured.');
+    const now = Date.now();
+    for (const [id, attempt] of this.challenges) {
+      if (attempt.expires <= now) this.challenges.delete(id);
+    }
+    if (this.challenges.size >= 1000) throw new ServiceUnavailableException('Please try Google sign-in again shortly.');
+    const challengeId = randomBytes(32).toString('hex');
+    const nonce = randomBytes(32).toString('hex');
+    this.challenges.set(challengeId, { nonce, expires: now + 5 * 60 * 1000 });
+    return { challengeId, nonce, state: randomBytes(32).toString('hex'), expiresAt: now + 5 * 60 * 1000 };
+  }
 
   constructor(
     private configService: ConfigService,
@@ -51,19 +66,30 @@ export class GoogleOAuthService {
     }
   }
 
-  async googleLogin(googleToken: string) {
+  async googleLogin(googleToken: string, challengeId: string) {
+    const challenge = this.challenges.get(challengeId);
+    if (!challenge || challenge.expires <= Date.now()) {
+      this.challenges.delete(challengeId);
+      throw new UnauthorizedException('Google sign-in expired. Please start again.');
+    }
     const payload = await this.verifyGoogleToken(googleToken);
-    this.logger.log(`Google login attempt for email: ${payload.email}`);
+    if (payload.nonce !== challenge.nonce || this.challenges.get(challengeId) !== challenge) {
+      throw new UnauthorizedException('Google sign-in could not be matched to this login attempt.');
+    }
+    // Consume synchronously before database awaits so concurrent replays fail.
+    this.challenges.delete(challengeId);
 
-    if (await this.usersService.isDeactivatedEmail(payload.email)) {
+    if (await this.usersService.isDeactivatedEmail(payload.email) || await this.usersService.isDeactivatedGoogleId(payload.sub)) {
       throw new UnauthorizedException('This account has been deactivated.');
     }
     
-    let user = await this.usersService.findByEmail(payload.email);
+    let user = await this.usersService.findByGoogleId(payload.sub);
     
     if (!user) {
+      if (await this.usersService.findByEmail(payload.email)) {
+        throw new ConflictException('An account already uses this email. Sign in with email and password; automatic Google linking is disabled for your protection.');
+      }
       // Create new user with Google OAuth - don't set password at all
-      this.logger.log(`Creating new user for Google OAuth: ${payload.email}`);
       user = await this.usersService.create({
         email: payload.email,
         googleId: payload.sub,
@@ -71,13 +97,6 @@ export class GoogleOAuthService {
         avatar: payload.picture,
         // Do NOT include password field for Google OAuth users
       } as any); // Use type assertion to bypass TypeScript check
-    } else if (!user.googleId) {
-      // Link Google account to existing user
-      this.logger.log(`Linking Google account to existing user: ${payload.email}`);
-      user.googleId = payload.sub;
-      user.avatar = payload.picture;
-      // Do not pass the loaded password hash into the password-update path.
-      await this.usersService.linkGoogleAccount(user.id, payload.sub, payload.picture);
     }
 
     // Generate JWT token
@@ -85,6 +104,7 @@ export class GoogleOAuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      version: user.tokenVersion ?? 0,
     });
 
     this.logger.log(`Google login successful for user ID: ${user.id}`);

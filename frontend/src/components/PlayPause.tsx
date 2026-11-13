@@ -51,7 +51,7 @@ const PlayPause: React.FC<PlayPauseProps> = ({
   handlePlay,
 }) => (
   <button type="button" aria-label={`${isPlaying && activeSong?.title === song.title ? 'Pause' : 'Play'} ${song.title || 'track'}`}
-    onClick={isPlaying && activeSong?.title === song.title ? handlePause : handlePlay}
+    onClick={event => { event.stopPropagation(); (isPlaying && activeSong?.title === song.title ? handlePause : handlePlay)(); }}
     className="flex h-11 w-11 items-center justify-center rounded-full text-white focus-visible:outline-2 focus-visible:outline-indigo-400">
     {isPlaying && activeSong?.title === song.title
       ? <FaPauseCircle size={35} aria-hidden="true" />

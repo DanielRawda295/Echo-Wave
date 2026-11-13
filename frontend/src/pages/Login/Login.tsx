@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useRecentlyPlayed } from '../../hooks/useRecentlyPlayed';
 import styles from './Login.module.css';
+import { saveGoogleAttempt } from '../../utils/googleOAuth';
 
 /**
  * Forgot Password Modal
@@ -147,7 +148,8 @@ const ResetPasswordModal = ({
   }) => Promise<void>;
   email: string;
 }) => {
-  const [otp, setOtp] = useState('');
+  const [otpDigits, setOtpDigits] = useState<string[]>(Array(6).fill(''));
+  const otp = otpDigits.join('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -157,8 +159,16 @@ const ResetPasswordModal = ({
   const [canResend, setCanResend] = useState(false);
   const [resendCount, setResendCount] = useState(0);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setOtpDigits(Array(6).fill(''));
+    setNewPassword(''); setConfirmPassword(''); setMessage(''); setError('');
+    setTimer(60); setCanResend(false); setResendCount(0);
+  }, [isOpen, email]);
+
   // Countdown logic — FIXED
 useEffect(() => {
+  if (!isOpen) return;
   if (timer <= 0) {
     setCanResend(true);
     return;
@@ -169,7 +179,7 @@ useEffect(() => {
   }, 1000);
 
   return () => clearInterval(interval);
-}, [timer]);
+}, [timer, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,11 +230,11 @@ useEffect(() => {
         onClose();
       }, 2500);
     } catch (err: any) {
-      console.error("Reset password error:", err);
+
 
       let raw = err.response?.data;
 
-let errorMessage = 
+let errorMessage =
   typeof raw === "string"
     ? raw
     : raw?.message ||
@@ -258,35 +268,30 @@ setError(String(errorMessage));
       key={index}
       id={`otp-${index}`}
       type="text"
+      inputMode="numeric"
+      autoComplete={index === 0 ? 'one-time-code' : 'off'}
+      aria-label={`Reset code digit ${index + 1}`}
       maxLength={1}
       className={styles.otpBox}
-      value={otp[index] || ""}
+      value={otpDigits[index]}
       onChange={(e) => {
-        const value = e.target.value.replace(/\D/, "");
-
-        if (!value) return; // Only allow digits
-
-        // ⛔ Prevent editing once filled (this fixes your issue)
-        if (otp[index]) return;
-
-        const newOtp = otp.split("");
-        newOtp[index] = value;
-        const finalOtp = newOtp.join("");
-
-        setOtp(finalOtp);
-
-        // Auto-focus next input
-        const next = document.getElementById(`otp-${index + 1}`);
-        if (next) (next as HTMLInputElement).focus();
+        const value = e.target.value.replace(/\D/g, '').slice(-1);
+        setOtpDigits(digits => digits.map((digit, i) => i === index ? value : digit));
+        if (value) document.getElementById(`otp-${Math.min(index + 1, 5)}`)?.focus();
+      }}
+      onPaste={event => {
+        event.preventDefault();
+        const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6 - index);
+        if (!pasted) return;
+        setOtpDigits(digits => digits.map((digit, i) => i >= index && i < index + pasted.length ? pasted[i - index] : digit));
+        document.getElementById(`otp-${Math.min(index + pasted.length, 5)}`)?.focus();
       }}
       onKeyDown={(e) => {
         if (e.key === "Backspace") {
-          const newOtp = otp.split("");
-          newOtp[index] = "";
-          setOtp(newOtp.join(""));
-
-          const prev = document.getElementById(`otp-${index - 1}`);
-          if (prev) (prev as HTMLInputElement).focus();
+          e.preventDefault();
+          const target = otpDigits[index] ? index : Math.max(0, index - 1);
+          setOtpDigits(digits => digits.map((digit, i) => i === target ? '' : digit));
+          document.getElementById(`otp-${target}`)?.focus();
         }
       }}
     />
@@ -496,11 +501,10 @@ export default function Login() {
   /**
    * Google OAuth
    */
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     let redirectUri =
       import.meta.env.VITE_GOOGLE_REDIRECT_URI || `${window.location.origin}/auth/google/callback`;
-    const nonce = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
     try {
       const url = new URL(redirectUri);
@@ -517,22 +521,24 @@ export default function Login() {
       return;
     }
 
-    const authUrl =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=id_token&` +
-      `scope=openid%20email%20profile&` +
-      `nonce=${encodeURIComponent(nonce)}&` +
-      `state=google_${Date.now()}`;
-
+    setIsLoading(true);
     try {
-      sessionStorage.setItem('echowave.oauth.persist', rememberMe ? '1' : '0');
-      sessionStorage.setItem('echowave.oauth.next', nextParam || '/');
+      const { data: challenge } = await api.post('/auth/google-challenge');
+      saveGoogleAttempt({ ...challenge, persist: rememberMe, next: nextParam });
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=id_token&` +
+        `scope=openid%20email%20profile&` +
+        `nonce=${encodeURIComponent(challenge.nonce)}&` +
+        `state=${encodeURIComponent(challenge.state)}`;
+
+      window.location.href = authUrl;
     } catch {
-      // ignore
+      setFormError('Google sign-in could not start. Please try again.');
+      setIsLoading(false);
     }
-    window.location.href = authUrl;
   };
 
   /**
@@ -578,7 +584,7 @@ export default function Login() {
     setShowResetPassword(false);
     setResetEmail('');
   } catch (err: any) {
-    console.error('Reset password error:', err);
+
 
     let errorMessage =
       err.response?.data?.message ||
@@ -664,6 +670,9 @@ export default function Login() {
             )}
           </div>
 
+          {location.state?.passwordChanged === true && (
+            <div className={styles.success} role="status">Password changed. Please sign in again with your new password.</div>
+          )}
           {formError && <div className={styles.error} role="alert">{formError}</div>}
 
           <button

@@ -177,7 +177,7 @@ export const musicApi = createApi({
      * @returns {Song[]} Array of matching songs
      */
     getSearchSongs: builder.query<Song[], string>({
-      query: (term) => `/search?term=${term}&entity=musicTrack&limit=50`,
+      query: (term) => ({ url: '/search', params: { term, entity: 'musicTrack', limit: 50 } }),
       transformResponse: (response: iTunesResponse) => {
         return response.results.map((track: any) => ({
           ...track,
@@ -233,16 +233,19 @@ export const musicApi = createApi({
      * @returns {Object} Artist data with top songs in Deezer-compatible format
      */
     getArtistDetails: builder.query<any, string>({
-      query: (artistName) => `/search?term=${encodeURIComponent(artistName)}&entity=musicTrack&limit=50`,
+      query: (artistName) => /^\d+$/.test(artistName)
+        ? { url: '/lookup', params: { id: artistName, entity: 'song', limit: 50 } }
+        : { url: '/search', params: { term: artistName, entity: 'musicTrack', limit: 50 } },
       transformResponse: (response: iTunesResponse, _meta, artistName) => {
-        const songs = response.results || [];
+        const artistRecord = response.results?.find((entry: any) => entry.wrapperType === 'artist');
+        const songs = (response.results || []).filter((entry: any) => entry.wrapperType !== 'artist');
         
         // Handle case where no songs found for artist
         if (songs.length === 0) {
           return {
             data: [{
               attributes: {
-                name: artistName,
+                name: artistRecord?.artistName || artistName,
                 genreNames: ['Unknown'],
               }
             }],
