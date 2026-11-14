@@ -33,9 +33,10 @@ export default function Community() {
       try {
         setLoading(true);
         setError('');
-        const res = await api.get('/tracks');
+        const res = await api.get('/tracks', { params: { _fresh: Date.now() } });
         if (!active) return;
-        const list = res.data || [];
+        if (!Array.isArray(res.data)) throw new Error('Could not read community uploads. Please refresh and try again.');
+        const list = res.data;
         setTracks(list);
 
         const ids = (list as Track[]).map((t) => t.id).join(',');

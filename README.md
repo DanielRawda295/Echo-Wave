@@ -49,7 +49,7 @@ The help widget uses keyword intent matching and local Markdown knowledge lookup
 
 - **PostgreSQL:** users, deactivated-account records, reset codes, playlists, uploaded-track metadata, likes, and comments. Catalog playlist items are stored as JSONB snapshots; playlists also have a relation to uploaded tracks.
 - **Media:** production uploads go to the public Supabase `echowave-media` bucket; development without storage credentials uses `backend/uploads/`, served at `/uploads/`. Database rows store the media URLs, and the frontend accepts both hosted and backend-relative URLs.
-- **Browser:** favorites and recent history are persisted locally and cleared on login/logout. They are not synchronized between devices. JWTs use local storage for remembered logins or session storage for temporary/guest logins.
+- **Browser:** favorites and recent history are saved locally for each account and restored when that account logs back in. Logout hides them; account deactivation removes that account's local lists. They are not synchronized between devices, and clearing browser storage removes them. JWTs use local storage for remembered logins or session storage for temporary/guest logins.
 
 ## Repository structure
 

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import api from '../utils/api';
 import { useToasts } from '../hooks/useToasts';
+import { useNavigate } from 'react-router-dom';
 
 export default function UploadSong() {
+  const navigate = useNavigate();
   const toast = useToasts((s) => s.push);
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
@@ -26,9 +28,13 @@ export default function UploadSong() {
       if (cover) form.append('cover', cover);
       if (audio) form.append('audio', audio);
 
-      await api.post('/tracks/upload', form, {
+      const response = await api.post('/tracks/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      if (!Number.isInteger(response.data?.id) || response.data.id <= 0 || !response.data.fileUrl) {
+        throw new Error('The server did not confirm a saved song. Check My Uploads before retrying.');
+      }
 
       toast('Song uploaded', 'success');
       setTitle('');
@@ -36,6 +42,7 @@ export default function UploadSong() {
       setGenre('');
       setCover(null);
       setAudio(null);
+      navigate('/my-uploads');
     } catch (err: any) {
       const msg =
         err?.response?.data?.message?.message ||

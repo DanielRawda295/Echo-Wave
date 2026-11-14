@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Query, UploadedFiles, UseInterceptors, Body, UseGuards, Req, BadRequestException, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Param, Query, UploadedFiles, UseInterceptors, Body, UseGuards, Req, BadRequestException, Patch, Delete, Header } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { TracksService } from './tracks.service';
@@ -67,6 +67,7 @@ export class TracksController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me/list')
+  @Header('Cache-Control', 'no-store')
   findMine(@Req() req) {
     return this.tracksService.findMine(req.user.sub);
   }
@@ -87,6 +88,7 @@ export class TracksController {
   }
 
   @Get()
+  @Header('Cache-Control', 'no-store')
   findAll() {
     return this.tracksService.findAll();
   }

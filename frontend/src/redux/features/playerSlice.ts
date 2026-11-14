@@ -73,6 +73,7 @@ const playerSlice = createSlice({
   name: 'player',          // Slice name used in Redux DevTools
   initialState,            // Initial state defined above
   reducers: {
+    resetPlayer: () => ({ ...initialState }),
     /**
      * setActiveSong - Set the currently active song and initialize queue
      * 
@@ -187,6 +188,7 @@ const playerSlice = createSlice({
  * These actions can be dispatched from any component to control the player
  */
 export const { 
+  resetPlayer,
   setActiveSong,     // Start playing a new song
   nextSong,          // Skip to next song
   prevSong,          // Go to previous song  

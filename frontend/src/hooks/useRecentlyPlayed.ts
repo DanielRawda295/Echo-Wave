@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { accountLibraryKey, accountLibraryStorage, getStoredAccountId, migrateCurrentLibrary } from '../utils/accountLibrary';
 
 export type RecentlyPlayedItem = {
   id: string;
@@ -17,6 +18,9 @@ type RecentlyPlayedState = {
   clear: () => void;
 };
 
+const initialAccount = getStoredAccountId();
+migrateCurrentLibrary('recentlyPlayed', initialAccount);
+
 export const useRecentlyPlayed = create<RecentlyPlayedState>()(
   persist(
     (set) => ({
@@ -31,6 +35,20 @@ export const useRecentlyPlayed = create<RecentlyPlayedState>()(
       },
       clear: () => set({ items: [] }),
     }),
-    { name: 'echowave.recentlyPlayed.v1' }
+    {
+      name: accountLibraryKey('recentlyPlayed', initialAccount),
+      storage: createJSONStorage(() => accountLibraryStorage),
+      partialize: (state) => ({ items: state.items }),
+      merge: (saved, current) => ({
+        ...current,
+        items: Array.isArray((saved as Partial<RecentlyPlayedState> | undefined)?.items)
+          ? (saved as RecentlyPlayedState).items.slice(0, 100) : [],
+      }),
+    }
   )
 );
+
+export function selectRecentlyPlayedAccount(accountId: string | null) {
+  useRecentlyPlayed.persist.setOptions({ name: accountLibraryKey('recentlyPlayed', accountId) });
+  void useRecentlyPlayed.persist.rehydrate();
+}

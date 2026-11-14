@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { forgetAccountLibrary } from '../utils/accountLibrary';
 
 type MeResponse = {
   id: number;
@@ -411,6 +412,7 @@ export default function Account() {
                       password: deactivatePassword,
                       confirmPassword: deactivateConfirmPassword,
                     });
+                    forgetAccountLibrary(me ? String(me.id) : null);
                     // Successfully deactivated: clear session and force navigation to login
                     logout();
                     setDeactivateOpen(false);

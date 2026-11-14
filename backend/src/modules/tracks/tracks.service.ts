@@ -52,7 +52,7 @@ export class TracksService {
   }
 
   async findAll() {
-    const tracks = await this.repo.find({ relations: ['uploader'] });
+    const tracks = await this.repo.find({ relations: ['uploader'], order: { createdAt: 'DESC', id: 'DESC' } });
     return tracks.map((t: any) => this.sanitize(t));
   }
 

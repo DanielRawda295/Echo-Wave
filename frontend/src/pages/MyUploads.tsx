@@ -34,8 +34,9 @@ export default function MyUploads() {
   const [saving, setSaving] = useState(false);
 
   async function refresh() {
-    const res = await api.get('/tracks/me/list');
-    setTracks(res.data || []);
+    const res = await api.get('/tracks/me/list', { params: { _fresh: Date.now() } });
+    if (!Array.isArray(res.data)) throw new Error('Could not read your uploads. Please refresh and try again.');
+    setTracks(res.data);
   }
 
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { accountLibraryKey, accountLibraryStorage, getStoredAccountId, migrateCurrentLibrary } from '../utils/accountLibrary';
 
 export type FavoriteSong = {
   id: string;
@@ -40,6 +41,9 @@ type FavoritesState = {
   clearFavorites: () => void;
 };
 
+const initialAccount = getStoredAccountId();
+migrateCurrentLibrary('favorites', initialAccount);
+
 export const useFavorites = create<FavoritesState>()(
   persist(
     (set, get) => ({
@@ -78,7 +82,21 @@ export const useFavorites = create<FavoritesState>()(
       },
       clearFavorites: () => set({ favorites: [] }),
     }),
-    { name: 'echowave.favorites.v1' }
+    {
+      name: accountLibraryKey('favorites', initialAccount),
+      storage: createJSONStorage(() => accountLibraryStorage),
+      partialize: (state) => ({ favorites: state.favorites }),
+      merge: (saved, current) => ({
+        ...current,
+        favorites: Array.isArray((saved as Partial<FavoritesState> | undefined)?.favorites)
+          ? (saved as FavoritesState).favorites.slice(0, 200) : [],
+      }),
+    }
   )
 );
+
+export function selectFavoritesAccount(accountId: string | null) {
+  useFavorites.persist.setOptions({ name: accountLibraryKey('favorites', accountId) });
+  void useFavorites.persist.rehydrate();
+}
 

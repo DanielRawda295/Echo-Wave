@@ -34,7 +34,7 @@ The default frontend URL is `http://localhost:5173`. Set `VITE_API_URL=http://lo
 
 ## Data and configuration
 
-Catalog results and preview audio come from iTunes. Community data, accounts, and playlists use the NestJS API. Favorites and recently played tracks are browser-local, and login/logout clears them; they do not sync across devices.
+Catalog results and preview audio come from iTunes. Community data, accounts, and playlists use the NestJS API. Favorites and recently played tracks are saved locally per account and restored after logging back in. They do not sync across devices; clearing browser storage removes them.
 
 All `VITE_` variables are public browser configuration. Keep private credentials on the backend. The current country lookup needs no geolocation API key. Real `.env` files are ignored by the repository's root rules; only sanitized examples should be committed.
 

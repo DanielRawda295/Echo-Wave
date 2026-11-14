@@ -6,8 +6,6 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
-import { useFavorites } from '../../hooks/useFavorites';
-import { useRecentlyPlayed } from '../../hooks/useRecentlyPlayed';
 import styles from './Login.module.css';
 import { saveGoogleAttempt } from '../../utils/googleOAuth';
 
@@ -432,19 +430,6 @@ export default function Login() {
 
     try {
       const res = await api.post('/auth/login', { email, password });
-
-      // Clear any persisted favorites so each account starts clean
-      try {
-        useFavorites.getState().clearFavorites();
-      } catch {
-        // ignore storage errors
-      }
-      // Clear recently played so it doesn't bleed across accounts
-      try {
-        useRecentlyPlayed.getState().clear();
-      } catch {
-        // ignore storage errors
-      }
 
       login(res.data.access_token, { persist: rememberMe });
       navigate(nextParam, { replace: true });

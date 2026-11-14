@@ -16,8 +16,11 @@
  */
 
 import { createContext, useContext, useState } from 'react';
-import { useFavorites } from '../hooks/useFavorites';
-import { useRecentlyPlayed } from '../hooks/useRecentlyPlayed';
+import { selectFavoritesAccount } from '../hooks/useFavorites';
+import { selectRecentlyPlayedAccount } from '../hooks/useRecentlyPlayed';
+import { getAccountId } from '../utils/accountLibrary';
+import { store } from '../redux/store';
+import { resetPlayer } from '../redux/features/playerSlice';
 
 /**
  * Authentication Context Interface
@@ -106,19 +109,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!cleaned) return;
     const persist = options?.persist !== false;
 
-    // Clear any locally persisted favorites when switching accounts
-    // to avoid showing favorites from a previous user session.
-    try {
-      useFavorites.getState().clearFavorites();
-    } catch {
-      // ignore storage errors
-    }
-    // Clear recently played for the same reason (per-account state)
-    try {
-      useRecentlyPlayed.getState().clear();
-    } catch {
-      // ignore storage errors
-    }
+    const accountId = getAccountId(cleaned);
+    if (getAccountId(token) !== accountId) store.dispatch(resetPlayer());
+    selectFavoritesAccount(accountId);
+    selectRecentlyPlayedAccount(accountId);
 
     if (persist) {
       localStorage.setItem('token', cleaned);
@@ -143,18 +137,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
 
-    // Clear favorites on logout so the next user starts fresh
-    try {
-      useFavorites.getState().clearFavorites();
-    } catch {
-      // ignore storage errors
-    }
-    // Clear recently played as well
-    try {
-      useRecentlyPlayed.getState().clear();
-    } catch {
-      // ignore storage errors
-    }
+    store.dispatch(resetPlayer());
+    selectFavoritesAccount(null);
+    selectRecentlyPlayedAccount(null);
     // Clear token from React state
     setToken(null);
   };
